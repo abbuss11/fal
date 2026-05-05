@@ -1,5 +1,12 @@
 [phases.setup]
-nixPkgs = ["php83", "php83Extensions.composer", "nodejs"]
+[phases.setup]
+nixPkgs = [
+  "php83",
+  "php83Extensions.composer",
+  "php83Extensions.intl",
+  "php83Extensions.zip",
+  "nodejs"
+]
 
 [phases.build]
 cmds = [

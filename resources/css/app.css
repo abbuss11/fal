@@ -1,0 +1,547 @@
+@import url('https://fonts.bunny.net/css?family=space-grotesk:400,500,600,700|plus-jakarta-sans:400,500,600,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --client-bg: #f6f2e9;
+    --client-surface: #fffdf8;
+    --client-card: #ffffff;
+    --client-text: #1f2a37;
+    --client-muted: #5f6f81;
+    --client-accent: #d8602a;
+    --client-accent-soft: #f59e0b;
+    --client-teal: #0f766e;
+    --client-line: #e8ddca;
+    --client-glow: rgba(216, 96, 42, 0.28);
+}
+
+@layer base {
+    body {
+        font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        color: var(--client-text);
+        background:
+            radial-gradient(circle at 12% 20%, rgba(216, 96, 42, 0.14), transparent 35%),
+            radial-gradient(circle at 88% 18%, rgba(15, 118, 110, 0.1), transparent 34%),
+            var(--client-bg);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: -0.02em;
+    }
+}
+
+@layer components {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    .client-page {
+        @apply relative min-h-screen overflow-x-hidden;
+    }
+
+    .client-shell {
+        @apply relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .client-panel {
+        border: 1px solid var(--client-line);
+        @apply rounded-2xl bg-white/95 shadow-[0_18px_50px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm;
+    }
+
+    .client-grid-bg {
+        background-image:
+            linear-gradient(to right, rgba(148, 163, 184, 0.12) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+        background-size: 28px 28px;
+    }
+
+    .client-badge {
+        @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em];
+        background: color-mix(in srgb, var(--client-accent) 10%, white);
+        color: var(--client-accent);
+    }
+
+    .client-button {
+        @apply inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold text-white transition duration-200 ease-out;
+        background: linear-gradient(135deg, var(--client-accent) 0%, #bb3f1f 100%);
+        box-shadow: 0 14px 24px -18px var(--client-glow);
+    }
+
+    .client-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 28px -18px var(--client-glow);
+    }
+
+    .client-button-muted {
+        @apply inline-flex items-center justify-center rounded-xl border px-5 py-3 text-sm font-semibold transition duration-200;
+        border-color: var(--client-line);
+        color: var(--client-text);
+        background: color-mix(in srgb, var(--client-card) 88%, #f1f5f9);
+    }
+
+    .client-button-muted:hover {
+        border-color: color-mix(in srgb, var(--client-accent) 35%, var(--client-line));
+        color: var(--client-accent);
+    }
+
+    .client-stat {
+        @apply rounded-2xl border p-5;
+        border-color: var(--client-line);
+        background: linear-gradient(155deg, white 0%, #fff8ef 100%);
+    }
+
+    .client-heading-accent {
+        background: linear-gradient(120deg, #1f2a37 0%, #0f766e 50%, #d8602a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .client-tab {
+        @apply rounded-xl border px-4 py-2 text-sm font-semibold transition;
+        border-color: var(--client-line);
+        background: color-mix(in srgb, var(--client-card) 90%, #f1f5f9);
+        color: var(--client-text);
+    }
+
+    .client-tab-active {
+        border-color: color-mix(in srgb, var(--client-accent) 45%, var(--client-line));
+        color: var(--client-accent);
+        box-shadow: 0 10px 20px -18px var(--client-glow);
+    }
+
+    .board-column-active {
+        border-color: color-mix(in srgb, var(--client-accent) 45%, var(--client-line));
+        background: color-mix(in srgb, var(--client-accent) 7%, white);
+    }
+
+    .board-column {
+        transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+    }
+
+    .board-card {
+        transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, opacity 180ms ease;
+    }
+
+    .board-card:hover {
+        transform: translateY(-1px);
+        border-color: color-mix(in srgb, var(--client-accent) 36%, var(--client-line));
+        box-shadow: 0 16px 30px -24px rgba(15, 23, 42, 0.5);
+    }
+
+    .fade-up {
+        animation: fade-up 650ms ease-out both;
+    }
+
+    .studio-dashboard {
+        @apply grid gap-4 rounded-3xl border border-[var(--client-line)] bg-white/90 p-4 shadow-[0_20px_65px_-45px_rgba(15,23,42,0.45)] xl:grid-cols-[220px_1fr];
+    }
+
+    .studio-sidebar {
+        @apply flex h-full flex-col rounded-2xl border border-[var(--client-line)] bg-[var(--client-surface)] p-4;
+    }
+
+    .studio-brand-title {
+        @apply text-sm font-bold uppercase tracking-[0.18em] text-slate-900;
+    }
+
+    .studio-brand-subtitle {
+        @apply mt-1 text-xs text-slate-500;
+    }
+
+    .studio-nav-item {
+        @apply block rounded-xl border border-transparent px-3 py-2 font-medium text-slate-600 transition;
+    }
+
+    .studio-nav-item:hover {
+        border-color: var(--client-line);
+        color: var(--client-accent);
+        background: white;
+    }
+
+    .studio-nav-item-active {
+        border-color: color-mix(in srgb, var(--client-accent) 30%, var(--client-line));
+        color: var(--client-accent);
+        background: white;
+    }
+
+    .studio-main {
+        @apply space-y-5 rounded-2xl border border-[var(--client-line)] bg-white p-4;
+    }
+
+    .studio-toolbar {
+        @apply flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--client-line)] bg-slate-50 px-4 py-3;
+    }
+
+    .studio-search {
+        @apply inline-flex min-w-[220px] items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm;
+    }
+
+    .studio-search-icon {
+        @apply inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500;
+    }
+
+    .studio-kpi-grid {
+        @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
+    }
+
+    .studio-kpi-card {
+        @apply rounded-2xl border border-[var(--client-line)] bg-white p-4;
+    }
+
+    .studio-kpi-label {
+        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+    }
+
+    .studio-kpi-value {
+        @apply mt-2 text-3xl font-semibold text-slate-900;
+    }
+
+    .studio-kpi-help {
+        @apply mt-1 text-xs text-slate-500;
+    }
+
+    .studio-panel {
+        @apply rounded-2xl border border-[var(--client-line)] bg-white p-4;
+    }
+
+    .studio-panel-title {
+        @apply text-base font-semibold text-slate-900;
+    }
+
+    .studio-ring {
+        --ring: 0%;
+        @apply relative inline-flex h-24 w-24 items-center justify-center rounded-full text-base font-semibold text-slate-900;
+        background:
+            radial-gradient(circle at center, white 56%, transparent 57%),
+            conic-gradient(var(--client-accent) var(--ring), #e2e8f0 var(--ring));
+    }
+
+    .jira-board-shell {
+        @apply grid overflow-hidden rounded-2xl border border-[#2b3140] bg-[#111620];
+        grid-template-columns: 54px 240px minmax(0, 1fr);
+        min-height: 74vh;
+    }
+
+    .jira-rail {
+        border-right: 1px solid #2b3140;
+        @apply flex flex-col items-center gap-2 bg-[#0f131c] px-2 py-3;
+    }
+
+    .jira-rail-icon {
+        @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-[10px] font-semibold text-slate-300 transition;
+        background: #1a2130;
+    }
+
+    .jira-rail-icon:hover {
+        border-color: #3d4c66;
+        color: #ffffff;
+    }
+
+    .jira-rail-icon-active {
+        border-color: #4f6fae;
+        background: #1f3870;
+        color: #9fc0ff;
+    }
+
+    .jira-workspace-sidebar {
+        border-right: 1px solid #2b3140;
+        @apply flex flex-col bg-[#171b24] p-4 text-slate-200;
+    }
+
+    .jira-brand-title {
+        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400;
+    }
+
+    .jira-brand h3 {
+        @apply mt-1 text-xl font-semibold text-white;
+    }
+
+    .jira-side-nav {
+        @apply mt-5 space-y-1;
+    }
+
+    .jira-side-link {
+        @apply block rounded-lg px-3 py-2 text-sm text-slate-300 transition;
+    }
+
+    .jira-side-link:hover {
+        @apply bg-[#202634] text-white;
+    }
+
+    .jira-side-block {
+        @apply mt-6;
+    }
+
+    .jira-side-block-title {
+        @apply text-xs font-semibold uppercase tracking-[0.1em] text-slate-500;
+    }
+
+    .jira-project-link {
+        @apply mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-200 transition;
+    }
+
+    .jira-project-link:hover {
+        @apply bg-[#202634] text-white;
+    }
+
+    .jira-project-link-active {
+        @apply bg-[#1f3870] text-[#9fc0ff];
+    }
+
+    .jira-project-dot {
+        @apply inline-flex h-2 w-2 rounded-full bg-[#5aa2ff];
+    }
+
+    .jira-side-note {
+        border: 1px solid #2b3140;
+        @apply mt-auto rounded-xl bg-[#121722] p-3 text-xs text-slate-400;
+    }
+
+    .jira-workspace-main {
+        @apply bg-[#131722];
+    }
+
+    .jira-topbar {
+        border-bottom: 1px solid #2b3140;
+        @apply flex flex-wrap items-center justify-between gap-3 bg-[#1a1f2b] px-4 py-3;
+    }
+
+    .jira-search-wrap {
+        @apply inline-flex min-w-[230px] items-center gap-2 rounded-md border border-[#3a4257] bg-[#111621] px-3 py-2;
+    }
+
+    .jira-search-lens {
+        @apply text-[11px] font-semibold text-slate-500;
+    }
+
+    .jira-search {
+        @apply w-full border-0 bg-transparent p-0 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-0;
+    }
+
+    .jira-project-header {
+        border-bottom: 1px solid #2b3140;
+        @apply px-5 py-4;
+    }
+
+    .jira-project-meta {
+        @apply text-sm text-slate-400;
+    }
+
+    .jira-project-title-row {
+        @apply mt-1 flex flex-wrap items-center gap-3;
+    }
+
+    .jira-project-title-row h2 {
+        @apply text-[2rem] font-semibold text-white;
+    }
+
+    .jira-project-code {
+        @apply rounded-md border border-[#3a4257] bg-[#171e2b] px-2 py-1 text-xs font-semibold text-slate-300;
+    }
+
+    .jira-project-tabs {
+        @apply mt-4 flex flex-wrap items-center gap-4;
+    }
+
+    .jira-project-tab {
+        @apply border-b-2 border-transparent pb-2 text-sm font-medium text-slate-300 transition;
+    }
+
+    .jira-project-tab:hover {
+        @apply text-white;
+    }
+
+    .jira-project-tab-active {
+        @apply border-[#5aa2ff] text-[#8cb4ff];
+    }
+
+    .jira-toolbar {
+        @apply mt-4 flex flex-wrap items-center justify-between gap-3 px-5;
+    }
+
+    .jira-board-search-wrap {
+        @apply inline-flex min-w-[220px] items-center gap-2 rounded-md border border-[#3a4257] bg-[#161b27] px-3 py-2;
+    }
+
+    .jira-board-search {
+        @apply w-full border-0 bg-transparent p-0 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-0;
+    }
+
+    .jira-pill-btn {
+        @apply rounded-md border border-[#374053] bg-[#1a2232] px-3 py-2 text-xs font-semibold text-slate-200 transition;
+    }
+
+    .jira-pill-btn:hover {
+        @apply border-[#4f6fae] text-white;
+    }
+
+    .jira-pill-active {
+        @apply border-[#4f6fae] bg-[#1f3870] text-[#9fc0ff];
+    }
+
+    .jira-pill-btn-primary {
+        @apply rounded-md bg-[#4e83e7] px-3 py-2 text-xs font-semibold text-white transition;
+    }
+
+    .jira-pill-btn-primary:hover {
+        @apply bg-[#6a97ec];
+    }
+
+    .jira-chip {
+        @apply inline-flex items-center rounded-full border border-[#3a4257] bg-[#111621] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300;
+    }
+
+    .jira-sprint-metrics {
+        @apply mt-3 grid gap-3 px-5 md:grid-cols-2 xl:grid-cols-4;
+    }
+
+    .jira-metric-card {
+        @apply rounded-xl border border-[#2b3140] bg-[#171c28] px-3 py-3;
+    }
+
+    .jira-metric-card p:first-child {
+        @apply text-[11px] uppercase tracking-wide text-slate-400;
+    }
+
+    .jira-metric-card p:last-child {
+        @apply mt-1 text-2xl font-semibold text-white;
+    }
+
+    .jira-board-grid {
+        @apply mt-4 grid gap-3 px-5 pb-5 xl:grid-cols-4;
+    }
+
+    .jira-column {
+        border: 1px solid #2b3140;
+        @apply rounded-xl bg-[#161b27] p-2;
+    }
+
+    .jira-column-header {
+        @apply mb-3 flex items-center justify-between px-1;
+    }
+
+    .jira-column-header h3 {
+        @apply text-xs font-semibold uppercase tracking-[0.08em] text-slate-300;
+    }
+
+    .jira-count {
+        @apply rounded-md bg-[#252d3d] px-2 py-0.5 text-[11px] font-semibold text-slate-200;
+    }
+
+    .jira-column-body {
+        min-height: 220px;
+        border: 1px dashed #33405a;
+        @apply rounded-lg bg-[#111621] p-2;
+    }
+
+    .jira-task-card {
+        border: 1px solid #303a4f;
+        @apply rounded-lg bg-[#1f2430] p-3 shadow-none;
+    }
+
+    .jira-task-card:hover {
+        border-color: #4a5f86;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px -18px rgba(148, 177, 232, 0.5);
+    }
+
+    .jira-task-title {
+        @apply text-sm font-semibold text-white;
+    }
+
+    .jira-task-date {
+        @apply mt-2 inline-flex rounded-md border border-[#44506a] px-2 py-0.5 text-xs text-slate-300;
+    }
+
+    .jira-task-key {
+        @apply mt-2 text-xs font-semibold uppercase tracking-wide text-[#8cb4ff];
+    }
+
+    .jira-task-meta {
+        @apply mt-2 flex items-center justify-between text-xs text-slate-400;
+    }
+
+    .jira-task-avatar {
+        @apply inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#4b556d] bg-[#313946] text-[10px] font-semibold text-slate-200;
+    }
+
+    .jira-task-subtasks {
+        @apply mt-2 text-xs text-slate-400;
+    }
+
+    .jira-empty-col {
+        @apply rounded-md bg-[#161c28] px-3 py-2 text-xs text-slate-400;
+    }
+
+    .board-column-active {
+        border-color: #4e83e7 !important;
+        background: #161f33 !important;
+        box-shadow: inset 0 0 0 1px rgba(78, 131, 231, 0.35);
+    }
+
+    @media (max-width: 1400px) {
+        .jira-board-shell {
+            grid-template-columns: 54px minmax(0, 1fr);
+        }
+
+        .jira-workspace-sidebar {
+            display: none;
+        }
+    }
+
+    @media (max-width: 980px) {
+        .jira-board-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .jira-rail {
+            display: none;
+        }
+
+        .jira-topbar {
+            @apply px-3;
+        }
+
+        .jira-project-header {
+            @apply px-3;
+        }
+
+        .jira-toolbar {
+            @apply px-3;
+        }
+
+        .jira-sprint-metrics {
+            @apply px-3;
+        }
+
+        .jira-board-grid {
+            @apply px-3 pb-3;
+        }
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    .bg-client-surface {
+        background-color: var(--client-surface);
+    }
+}
+
+@keyframes fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

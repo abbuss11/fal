@@ -37,6 +37,9 @@ class UserFactory extends Factory
             'role' => User::ROLE_MEMBER,
             'is_active' => true,
             'last_seen_at' => fake()->dateTimeBetween('-2 days', 'now'),
+            'notify_email' => true,
+            'notify_realtime' => true,
+            'notify_push' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -63,6 +66,20 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'role' => User::ROLE_PROJECT_MANAGER,
+        ]);
+    }
+
+    public function manager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_MANAGER,
+        ]);
+    }
+
+    public function client(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => User::ROLE_CLIENT,
         ]);
     }
 }

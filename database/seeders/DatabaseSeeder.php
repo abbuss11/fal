@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -58,12 +59,47 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $managerDemo = User::query()->updateOrCreate(
+            ['email' => 'manager@fal-pms.test'],
+            [
+                'name' => 'Manager FAL',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'is_admin' => false,
+                'role' => User::ROLE_MANAGER,
+                'is_active' => true,
+                'last_seen_at' => now(),
+            ]
+        );
+
+        $clientDemo = User::query()->updateOrCreate(
+            ['email' => 'client@fal-pms.test'],
+            [
+                'name' => 'Client FAL',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'is_admin' => false,
+                'role' => User::ROLE_CLIENT,
+                'is_active' => true,
+                'last_seen_at' => now(),
+            ]
+        );
+
         $projectManagers = User::factory(4)->projectManager()->create();
+        $managers = User::factory(2)->manager()->create();
+        $clientsUsers = User::factory(3)->client()->create();
         $members = User::factory(12)->create();
         $owners = $projectManagers
+            ->merge($managers)
             ->push($projectManagerDemo)
+            ->push($managerDemo)
             ->push($admin);
         $members->push($memberDemo);
+        $clientsUsers->push($clientDemo);
+
+        $clients = Client::factory()
+            ->count(6)
+            ->create();
 
         for ($monthOffset = 5; $monthOffset >= 0; $monthOffset--) {
             $projectsInMonth = fake()->numberBetween(3, 5);
@@ -92,6 +128,7 @@ class DatabaseSeeder extends Seeder
                 $project = Project::factory()
                     ->for($owner, 'owner')
                     ->create([
+                        'client_id' => fake()->boolean(75) ? $clients->random()->id : null,
                         'status' => $status,
                         'priority' => fake()->randomElement(['low', 'medium', 'high']),
                         'start_date' => $startDate,
@@ -115,6 +152,15 @@ class DatabaseSeeder extends Seeder
                         ])
                         ->all()
                 );
+
+                if ($clientsUsers->isNotEmpty()) {
+                    $project->members()->syncWithoutDetaching([
+                        $clientsUsers->random()->id => [
+                            'role' => User::ROLE_CLIENT,
+                            'is_active' => true,
+                        ],
+                    ]);
+                }
 
                 $project->members()->syncWithoutDetaching([
                     $owner->id => [

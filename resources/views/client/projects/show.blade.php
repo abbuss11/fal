@@ -16,6 +16,9 @@
                 <p class="mt-1 text-sm text-slate-500">
                     Chef de projet: {{ $project->owner?->name ?? 'Non defini' }} |
                     Statut: {{ \App\Models\Project::statusOptions()[$project->status] ?? strtoupper((string) $project->status) }}
+                    @if ($project->is_archived)
+                        | Archive
+                    @endif
                 </p>
                 @if ($project->objective)
                     <p class="mt-1 text-sm text-slate-600">Objectif: {{ $project->objective }}</p>
@@ -25,6 +28,23 @@
                 <a href="{{ route('client.projects.index') }}" class="client-button-muted">Retour projets</a>
                 <a href="{{ route('client.tasks.index', ['project_id' => $project->id]) }}" class="client-button-muted">Tableau des taches</a>
                 <a href="{{ route('client.projects.report', $project) }}" class="client-button">Rapport complet</a>
+                @if ($canManageProject)
+                    <form method="POST" action="{{ route('client.projects.duplicate', $project) }}" class="inline">
+                        @csrf
+                        <button type="submit" class="client-button-muted">Dupliquer projet</button>
+                    </form>
+                    @if (! $project->is_archived)
+                        <form method="POST" action="{{ route('client.projects.archive', $project) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="client-button-muted">Archiver</button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('client.projects.unarchive', $project) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="client-button-muted">Desarchiver</button>
+                        </form>
+                    @endif
+                @endif
             </div>
         </div>
     </x-slot>
@@ -77,7 +97,7 @@
                 <article class="client-stat">
                     <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Retards</p>
                     <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_overdue">{{ $stats['tasks_overdue'] }}</p>
-                    <p class="mt-1 text-sm text-orange-700">taches en depassement</p>
+                    <p class="mt-1 text-sm text-cyan-700">taches en depassement</p>
                 </article>
                 <article class="client-stat">
                     <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Cycle moyen</p>

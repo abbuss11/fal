@@ -25,6 +25,8 @@ class TaskController extends Controller
                 'project:id,name',
                 'assignee:id,name,email',
                 'subtasks:id,task_id,is_completed',
+                'tags:id,name,color',
+                'dependencies:id,title,status',
             ])
             ->orderBy('due_date');
 
@@ -67,4 +69,3 @@ class TaskController extends Controller
         ]);
     }
 }
-

@@ -8,12 +8,19 @@ use App\Http\Controllers\Client\ProjectReportController as ClientProjectReportCo
 use App\Http\Controllers\Client\SubtaskController as ClientSubtaskController;
 use App\Http\Controllers\Client\TaskController as ClientTaskController;
 use App\Http\Controllers\Client\TimesheetController as ClientTimesheetController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('client.dashboard');
+    }
+
     return view('welcome');
-});
+})->name('home');
 
 Route::get('/dashboard', function () {
     return redirect()->route('client.dashboard');
@@ -46,6 +53,15 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::delete('/projects/{project}/members/{member}', [ClientProjectController::class, 'removeMember'])
         ->middleware('permission:projects.manage_members')
         ->name('projects.members.remove');
+    Route::post('/projects/{project}/archive', [ClientProjectController::class, 'archive'])
+        ->middleware('permission:projects.archive')
+        ->name('projects.archive');
+    Route::post('/projects/{project}/unarchive', [ClientProjectController::class, 'unarchive'])
+        ->middleware('permission:projects.archive')
+        ->name('projects.unarchive');
+    Route::post('/projects/{project}/duplicate', [ClientProjectController::class, 'duplicate'])
+        ->middleware('permission:projects.duplicate')
+        ->name('projects.duplicate');
     Route::get('/projects/{project}/report', [ClientProjectReportController::class, 'show'])->name('projects.report');
     Route::get('/projects/{project}/report/download', [ClientProjectReportController::class, 'download'])->name('projects.report.download');
     Route::get('/projects/{project}/report/download/pdf', [ClientProjectReportController::class, 'downloadPdf'])->name('projects.report.download-pdf');

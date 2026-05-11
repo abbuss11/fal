@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TaskAssignedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     /**
      * Create a new notification instance.
@@ -29,7 +29,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     /**

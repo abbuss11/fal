@@ -6,6 +6,7 @@ use App\Domain\Projects\Services\ProjectWorkspaceService;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\TaskSubtask;
 use App\Models\User;
 use App\Notifications\ProjectUpdatedNotification;
 use App\Services\ProjectReportService;
@@ -247,7 +248,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
-            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MEMBER])],
+            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MANAGER, User::ROLE_MEMBER, User::ROLE_CLIENT])],
             'is_active' => ['nullable', 'boolean'],
         ]);
 
@@ -287,7 +288,7 @@ class ProjectController extends Controller
         abort_unless($project->members()->where('users.id', $member->id)->exists(), 404);
 
         $validated = $request->validate([
-            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MEMBER])],
+            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MANAGER, User::ROLE_MEMBER, User::ROLE_CLIENT])],
             'is_active' => ['required', 'boolean'],
         ]);
 
@@ -337,6 +338,169 @@ class ProjectController extends Controller
         ]);
 
         return back()->with('status', 'Membre retire.');
+    }
+
+    public function archive(Request $request, Project $project): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $project->update([
+            'is_archived' => true,
+            'archived_at' => now(),
+        ]);
+
+        WorkspaceBroadcaster::forProject($project, 'project_archived', [
+            'project_id' => $project->id,
+        ]);
+
+        return back()->with('status', 'Projet archive.');
+    }
+
+    public function unarchive(Request $request, Project $project): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $project->update([
+            'is_archived' => false,
+            'archived_at' => null,
+        ]);
+
+        WorkspaceBroadcaster::forProject($project, 'project_unarchived', [
+            'project_id' => $project->id,
+        ]);
+
+        return back()->with('status', 'Projet desarchive.');
+    }
+
+    public function duplicate(Request $request, Project $project): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'with_tasks' => ['nullable', 'boolean'],
+            'mark_as_template' => ['nullable', 'boolean'],
+        ]);
+
+        $withTasks = (bool) ($validated['with_tasks'] ?? true);
+        $name = isset($validated['name']) && trim((string) $validated['name']) !== ''
+            ? trim((string) $validated['name'])
+            : $project->name.' (copie)';
+
+        $newProject = DB::transaction(function () use ($project, $user, $name, $withTasks, $validated): Project {
+            $project->loadMissing([
+                'members' => fn ($query) => $query->withPivot(['role', 'is_active']),
+                'tasks.tags',
+                'tasks.subtasks',
+                'tasks.dependencies',
+            ]);
+
+            $clonedProject = $project->replicate([
+                'completed_at',
+                'archived_at',
+            ]);
+            $clonedProject->name = $name;
+            $clonedProject->status = Project::STATUS_PLANNING;
+            $clonedProject->is_archived = false;
+            $clonedProject->archived_at = null;
+            $clonedProject->is_template = (bool) ($validated['mark_as_template'] ?? false);
+            $clonedProject->template_name = $clonedProject->is_template
+                ? ($project->template_name ?: $project->name)
+                : null;
+            $clonedProject->completed_at = null;
+            $clonedProject->owner_id = $user->id;
+            $clonedProject->save();
+
+            $members = $project->members
+                ->mapWithKeys(fn (User $member): array => [
+                    $member->id => [
+                        'role' => (string) ($member->pivot->role ?? User::ROLE_MEMBER),
+                        'is_active' => (bool) ($member->pivot->is_active ?? true),
+                    ],
+                ])
+                ->all();
+
+            $members[$user->id] = [
+                'role' => User::ROLE_PROJECT_MANAGER,
+                'is_active' => true,
+            ];
+
+            $clonedProject->members()->sync($members);
+
+            if (! $withTasks) {
+                return $clonedProject;
+            }
+
+            $taskMap = [];
+
+            $sourceTasks = $project->tasks
+                ->sortBy('position')
+                ->values();
+
+            foreach ($sourceTasks as $sourceTask) {
+                $clonedTask = $sourceTask->replicate(['completed_at']);
+                $clonedTask->project_id = $clonedProject->id;
+                $clonedTask->status = Task::STATUS_TODO;
+                $clonedTask->is_in_review = false;
+                $clonedTask->completed_at = null;
+                $clonedTask->save();
+
+                if ($sourceTask->relationLoaded('tags')) {
+                    $clonedTask->tags()->sync($sourceTask->tags->pluck('id')->all());
+                }
+
+                if ($sourceTask->relationLoaded('subtasks')) {
+                    $subtasksData = $sourceTask->subtasks
+                        ->map(fn (TaskSubtask $subtask): array => [
+                            'title' => $subtask->title,
+                            'is_completed' => false,
+                            'completed_by' => null,
+                            'completed_at' => null,
+                            'position' => $subtask->position,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ])
+                        ->all();
+
+                    $clonedTask->subtasks()->createMany($subtasksData);
+                }
+
+                $taskMap[$sourceTask->id] = $clonedTask->id;
+            }
+
+            foreach ($sourceTasks as $sourceTask) {
+                $clonedTaskId = $taskMap[$sourceTask->id] ?? null;
+                if (! $clonedTaskId) {
+                    continue;
+                }
+
+                $dependencyIds = $sourceTask->dependencies
+                    ->pluck('id')
+                    ->map(fn (int $sourceDependencyId): ?int => $taskMap[$sourceDependencyId] ?? null)
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if ($dependencyIds !== []) {
+                    Task::query()->find($clonedTaskId)?->dependencies()->sync($dependencyIds);
+                }
+            }
+
+            return $clonedProject;
+        });
+
+        return redirect()
+            ->route('client.projects.show', $newProject)
+            ->with('status', 'Projet duplique avec succes.');
     }
 
     /**

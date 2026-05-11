@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Resources\ProjectResource\RelationManagers\MembersRelationManager;
+use App\Models\Client;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -28,6 +29,17 @@ class ProjectResource extends Resource
                     ->label('Chef de projet')
                     ->searchable()
                     ->preload(),
+                Forms\Components\Select::make('client_id')
+                    ->relationship('client', 'name')
+                    ->label('Client')
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(180),
+                        Forms\Components\TextInput::make('company')->maxLength(180),
+                        Forms\Components\TextInput::make('email')->email()->maxLength(180),
+                        Forms\Components\TextInput::make('phone')->maxLength(80),
+                    ]),
                 Forms\Components\Select::make('members')
                     ->relationship('members', 'name')
                     ->multiple()
@@ -47,6 +59,13 @@ class ProjectResource extends Resource
                 Forms\Components\Select::make('status')
                     ->options(Project::statusOptions())
                     ->required(),
+                Forms\Components\Toggle::make('is_template')
+                    ->label('Template projet')
+                    ->default(false),
+                Forms\Components\TextInput::make('template_name')
+                    ->maxLength(180)
+                    ->label('Nom du template')
+                    ->visible(fn (Forms\Get $get): bool => (bool) $get('is_template')),
                 Forms\Components\Select::make('priority')
                     ->options(Project::priorityOptions())
                     ->required(),
@@ -57,6 +76,12 @@ class ProjectResource extends Resource
                     ->label('Date debut'),
                 Forms\Components\DatePicker::make('due_date')
                     ->label('Date echeance'),
+                Forms\Components\Toggle::make('is_archived')
+                    ->label('Archive')
+                    ->default(false),
+                Forms\Components\DateTimePicker::make('archived_at')
+                    ->label('Date archivage')
+                    ->visible(fn (Forms\Get $get): bool => (bool) $get('is_archived')),
                 Forms\Components\DateTimePicker::make('completed_at')
                     ->label('Date cloture'),
             ])
@@ -72,6 +97,10 @@ class ProjectResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('owner.name')
                     ->label('Chef de projet')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('client.name')
+                    ->label('Client')
+                    ->placeholder('Interne')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
@@ -98,6 +127,12 @@ class ProjectResource extends Resource
                     ->counts('tasks')
                     ->label('Taches')
                     ->sortable(),
+                Tables\Columns\IconColumn::make('is_template')
+                    ->label('Template')
+                    ->boolean(),
+                Tables\Columns\IconColumn::make('is_archived')
+                    ->label('Archive')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Echeance')
                     ->date('d/m/Y')
@@ -108,6 +143,13 @@ class ProjectResource extends Resource
                     ->options(Project::statusOptions()),
                 Tables\Filters\SelectFilter::make('priority')
                     ->options(Project::priorityOptions()),
+                Tables\Filters\TernaryFilter::make('is_template')
+                    ->label('Template'),
+                Tables\Filters\TernaryFilter::make('is_archived')
+                    ->label('Archive'),
+                Tables\Filters\SelectFilter::make('client_id')
+                    ->label('Client')
+                    ->options(fn (): array => Client::query()->orderBy('name')->pluck('name', 'id')->all()),
             ])
             ->actions([
                 Tables\Actions\Action::make('report')

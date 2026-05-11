@@ -1,142 +1,210 @@
-# Rapport Technique et Architecture: FAL-PMS
+# Rapport Technique et Cartographie Fonctionnelle: FAL-PMS
 
-## Présentation Générale
-FAL-PMS est un système de gestion de projet (Project Management System) développé avec Laravel. Il intègre une partie back-office via Filament PHP, et un espace client / front-office avec Blade, Tailwind CSS et AlpineJS. L'objectif de l'application est de faciliter la gestion collaborative de tâches, à la manière de Jira ou Trello, avec des fonctionnalités interactives comme des tableaux Kanban.
+## 1) Presentation generale
 
-## Stack Technique
-- **Backend:** Laravel 12.0 (PHP ^8.2)
-- **Frontend Admin:** Filament 3.0 (TALL Stack: Tailwind, Alpine, Laravel, Livewire)
-- **Frontend Client:** Moteur de template Blade, TailwindCSS pour le style, Alpine.js pour la réactivité, avec Vite comme bundler.
-- **Base de données:** SQLite (par défaut, optimisé pour un déploiement et des tests rapides, mais compatible avec MySQL/PostgreSQL).
-- **Temps réel / WebSockets:** Laravel Echo et Pusher (via `pusher/pusher-php-server`), gérés par des services de broadcast internes.
-- **Génération de PDF:** Package `barryvdh/laravel-dompdf` pour les exports de rapports.
+FAL-PMS est un systeme de gestion de projet collaboratif construit avec Laravel 12.
+Il expose:
 
-## Architecture Logicielle
+- un portail `Client` pour le travail quotidien des equipes projet
+- un portail `Admin` base sur Filament pour la gouvernance et l administration
+- une API REST `v1` pour clients mobiles (ex: Flutter)
 
-L'architecture est structurée de manière standard selon les conventions Laravel (MVC), augmentée de patterns adaptés aux applications complexes :
+Le projet couvre deja une grande partie des besoins type Jira/Trello, avec une architecture orientee collaboration temps reel.
 
-### Modèles de Données (Models)
-L'application repose sur les modèles principaux suivants :
-- **User :** Représente les utilisateurs de l'application (Administrateurs, Managers, Membres). Il dispose d'un système de rôles et de drapeaux d'activité.
-- **Project :** Les projets collaboratifs. Chaque projet a un "owner" (propriétaire) et des "members" avec une table pivot (`project_user`) gérant le rôle spécifique du membre dans le projet et son statut d'activation.
-- **Task :** Les tâches liées aux projets. Elles gèrent un cycle de vie statutaire normalisé (ex: `todo`, `doing`, `done`), la position (pour le drag & drop) et sont assignables aux membres du projet.
-- **TaskComment :** Permet la collaboration et la communication contextuelle autour des tâches.
-- **ActivityLog :** Enregistre l'historique complet des actions (création de projet, modification de tâche, assignation, etc.) pour des besoins d'audit de sécurité et pour alimenter la chronologie (timeline).
+## 2) Stack technique
 
-### Gestion Événementielle (Observers et Notifications)
-FAL-PMS utilise activement les Observers Laravel pour découpler et isoler la logique métier secondaire (comme la création d'historique ou l'envoi de notifications par e-mail) de la logique de contrôle principale :
-- `ProjectObserver` : Gère les événements du cycle de vie d'un projet.
-- `TaskObserver` : Logique métier critique de la tâche. Normalise le statut des tâches, gère le timestamp de complétion (`completed_at`), met à jour les positions, et déclenche de façon asynchrone les notifications par email (assignation, changement de statut, etc.) via le composant `Illuminate\Notifications`.
-- `TaskCommentObserver` : Gère le flux d'activité généré par les nouveaux commentaires.
+- Backend: Laravel 12 (PHP ^8.2)
+- Admin UI: Filament 3 (TALL stack)
+- Client UI: Blade + Tailwind + Alpine + Vite
+- Data: MySQL/MariaDB ou SQLite
+- Realtime: Laravel Echo + Pusher protocol (Pusher/Soketi)
+- Reporting PDF: `barryvdh/laravel-dompdf`
+- Notifications push mobiles: FCM via canal custom
 
-### Interfaces et Contrôleurs
-L'application offre deux portails d'accès distincts :
-- **Admin Portal (`/abba/*`) :** Ce portail d'administration est construit entièrement avec Filament PHP. Il gère de façon CRUD (Create, Read, Update, Delete) l'ensemble de l'écosystème : utilisateurs, projets et tâches avec des interfaces riches (tableaux de données, formulaires, widgets statistiques).
-- **Client Portal (`/client/*`) :** Interface web orientée utilisateur, gérée par des contrôleurs standards (ex: `ProjectController`, `TaskController`) dans le namespace `App\Http\Controllers\Client`. Ce portail sert des vues Blade enrichies avec Alpine.js, permettant un rendu côté serveur rapide complété d'interactions côté client (modales, listes dynamiques).
+## 3) Architecture logicielle
 
-### Gestion du Temps Réel
-L'application est conçue pour être hautement collaborative et interactive. Elle utilise les websockets pour diffuser des événements (Events) en temps réel via Pusher. Ceci permet de mettre à jour le board Kanban, le tableau de bord et le fil des commentaires sans rafraîchissement de page, en utilisant deux broadcaster personnalisés : `DashboardBroadcaster` et `WorkspaceBroadcaster`.
+### 3.1 Modeles principaux
 
+- `User`: roles globaux, permissions directes, profil et activite (`is_active`, `last_seen_at`)
+- `Project`: owner, membres, budget, statut, priorite, dates, objectif
+- `Task`: status, priorite, lane review (`is_in_review`), estimation, position board
+- `TaskSubtask`: sous-taches ordonnees avec suivi completion
+- `TaskComment` + `CommentMention`: collaboration contextuelle et mentions `@user`
+- `ProjectMessage`: chat interne projet
+- `ProjectFile`: gestion documentaire avec versioning
+- `Timesheet`: suivi du temps par utilisateur/projet/tache
+- `ActivityLog`: audit et timeline
+- `ApiToken` + `MobileDeviceToken`: auth API et push mobile
 
+### 3.2 RBAC et securite
 
+- Roles globaux actuellement definis:
+  - `admin`
+  - `project_manager`
+  - `member`
+- Permissions fines via table `permissions` + pivot `permission_user`
+- Middleware `permission:*` pour proteger les routes sensibles
+- Auth session web (Breeze) + email verification
+- Auth API token (`Bearer`) pour mobile
 
+### 3.3 Temps reel et diffusion
 
+- Broadcasters applicatifs:
+  - `DashboardBroadcaster`
+  - `WorkspaceBroadcaster`
+- Evenements principaux:
+  - `UserDashboardUpdated`
+  - `ProjectWorkspaceUpdated`
+- Usage:
+  - refresh dashboard sans reload
+  - sync board kanban
+  - sync timeline/commentaires/messages
 
+### 3.4 Notifications
 
+Canaux actifs:
 
+- `mail`
+- `database`
+- `broadcast`
+- `MobilePushChannel` (FCM)
 
+Triggers couverts:
 
+- assignation tache
+- changement statut tache
+- commentaire tache
+- mise a jour tache/projet
+- partage fichier
+- message projet
+- mention utilisateur
 
+## 4) Cartographie des 17 modules (etat mai 2026)
 
-# Documentation API et Endpoints : FAL-PMS
+Legende:
+- `Livre`: implemente et exploitable
+- `Partiel`: present mais incomplet
+- `Roadmap`: non implemente
 
-L'application FAL-PMS est principalement une application monolithique à rendu côté serveur (Server-Side Rendered), complétée par des endpoints AJAX internes nécessaires pour la réactivité de l'interface client (notamment pour les tableaux Kanban et le rafraîchissement en temps réel).
+| # | Module | Etat | Couverture actuelle / adaptation |
+|---|---|---|---|
+| 1 | Authentification & gestion utilisateurs | Partiel | Login/register/reset/email verify + RBAC + profil + activite + roles `manager` et `client`. A ajouter: Google OAuth, 2FA. |
+| 2 | Dashboard | Livre | KPIs projet/tache, retards, notifications, velocite, charge, snapshots realtime. |
+| 3 | Gestion des projets | Partiel | CRUD complet, membres, statut/priorite/budget/dates, rapport, archivage, duplication, template, liaison client. A ajouter: cycle contractuel client complet. |
+| 4 | Gestion des taches | Partiel | CRUD, sous-taches, assignation, priorite, echeance, commentaires, estimation, dependances et tags. A ajouter: temps passe par tache et checklist avancee. |
+| 5 | Kanban Board | Partiel | Drag & drop realtime, lanes Todo/Doing/Review/Done, filtres. A ajouter: WIP limit, swimlanes, colonnes custom administrees. |
+| 6 | Agile / Scrum | Partiel | Mode Scrum UI + metriques backlog/sprint + velocite hebdo. A ajouter: sprint planning, story points, burndown, retrospectives, releases. |
+| 7 | Calendrier & planning | Partiel | Calendrier taches + deadlines. A ajouter: sync Google Calendar, rappels auto, disponibilites equipe. |
+| 8 | Gantt chart | Roadmap | Timeline textuelle existe mais pas de Gantt interactif ni chemin critique. |
+| 9 | Collaboration & communication | Partiel | Commentaires, mentions, chat projet, historique, partage fichiers. A ajouter: reactions emoji, threads profonds. |
+| 10 | Notifications | Partiel | Temps reel + email + push + inbox database + preferences utilisateur (email/realtime/push). A ajouter: preferences par type d evenement. |
+| 11 | Gestion documentaire | Partiel | Upload + versioning + download securise. A ajouter: preview PDF/image, recherche documentaire, dossiers. |
+| 12 | Time tracking | Partiel | Timesheets web/API, aggregation dans rapports. A ajouter: timer live, facturable/non facturable, productivite avancee. |
+| 13 | Rapports & analytics | Partiel | Rapport detaille + JSON/PDF, KPI de charge/perf/progress. A ajouter: CSV/Excel, heatmaps, analytics timeline avancees. |
+| 14 | Gestion des equipes | Partiel | Membres projet, role projet, actif/inactif. A ajouter: departements, org chart, groupes transverses. |
+| 15 | Gestion des clients | Partiel | Entite client et affectation aux projets disponibles. A ajouter: portail client externe, validation livrables, facturation, support. |
+| 16 | Systeme fichiers & medias | Partiel | Fichiers versionnes avec metadata. A ajouter: CDN, compression auto, streaming media. |
+| 17 | Recherche intelligente | Partiel | Recherche locale par ecran + filtre tag sur taches. A ajouter: moteur global full-text + suggestions. |
 
-*Note : Les endpoints mentionnés ci-dessous nécessitent que l'utilisateur soit authentifié via la session web Laravel. Les réponses AJAX utilisent le format JSON.*
+## 5) Documentation API (etat actuel)
 
----
+Base prefix: `/api/v1`
 
-## 1. Authentification
-*Basé sur Laravel Breeze.*
-- `GET|POST /login` : Authentification utilisateur.
-- `POST /logout` : Déconnexion.
-- `GET|POST /register` : Inscription d'un nouvel utilisateur.
-- `POST /forgot-password` / `POST /reset-password` : Flux de réinitialisation de mot de passe.
+### 5.1 Auth API token
 
----
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me` (auth token)
+- `POST /auth/logout` (auth token)
 
-## 2. Portail Client (Endpoints Web & AJAX)
-*Préfixe de route : `/client`*
+### 5.2 Projets
 
-### Tableau de Bord (Dashboard)
-- `GET /client/dashboard`
-  - **Description :** Affiche le tableau de bord principal de l'utilisateur.
-- `GET /client/dashboard/snapshot`
-  - **Description :** Endpoint AJAX retournant l'état actuel des données globales pour le rafraîchissement asynchrone du dashboard.
-  - **Retour :** `JSON` (Version du snapshot, métriques, etc.)
+- `GET /projects`
+- `GET /projects/{project}`
 
-### Gestion des Projets
-- `GET /client/projects`
-  - **Description :** Liste paginée des projets de l'utilisateur.
-- `GET /client/projects/{project}`
-  - **Description :** Vue détaillée d'un projet, incluant le tableau Kanban, la timeline et les informations générales.
-- `GET /client/projects/{project}/snapshot`
-  - **Description :** Endpoint AJAX interne appelé par AlpineJS/Echo pour synchroniser les données d'un projet en temps réel.
-  - **Retour :** `JSON` contenant `version`, `status_counts`, `board_columns` (tâches), `stats`, `timeline`, et `recent_comments`.
+### 5.3 Taches
 
-### Gestion des Membres d'un Projet
-Ces endpoints manipulent la table pivot des projets.
-- `POST /client/projects/{project}/members`
-  - **Description :** Ajouter un nouveau membre à un projet.
-  - **Payload :** `user_id` (int), `role` (string), `is_active` (boolean).
-- `PATCH /client/projects/{project}/members/{member}`
-  - **Description :** Mettre à jour le rôle ou le statut de présence d'un membre.
-- `DELETE /client/projects/{project}/members/{member}`
-  - **Description :** Retirer un membre du projet.
+- `GET /tasks`
+- `PATCH /tasks/{task}/status`
 
-### Gestion des Tâches et Board Kanban
-- `GET /client/tasks`
-  - **Description :** Liste ou vue de toutes les tâches assignées.
-- `GET /client/tasks/calendar`
-  - **Description :** Vue calendrier des tâches selon leurs dates d'échéance.
-- `POST /client/tasks/{task}/comments`
-  - **Description :** Soumettre un nouveau commentaire sur une tâche spécifique.
-  - **Payload :** `body` (string).
-- `POST /client/projects/{project}/tasks/{task}/move`
-  - **Description :** Point d'entrée AJAX utilisé par l'interface drag & drop pour modifier l'état et la position d'une tâche.
-  - **Payload attendu :** 
-    ```json
-    {
-      "status": "todo|doing|done",
-      "position": 1
-    }
-    ```
-  - **Réponse :** 
-    ```json
-    {
-      "ok": true,
-      "task_id": 12,
-      "status": "doing",
-      "position": 1,
-      "snapshot_version": "a3b2c..."
-    }
-    ```
+### 5.4 Notifications
 
-### Rapports de Projet
-- `GET /client/projects/{project}/report`
-  - **Description :** Vue détaillée des statistiques et du rapport d'un projet.
-- `GET /client/projects/{project}/report/download`
-  - **Description :** Génère et télécharge le rapport au format Excel/CSV.
-- `GET /client/projects/{project}/report/download/pdf`
-  - **Description :** Génère et télécharge le rapport au format PDF via `dompdf`.
+- `GET /notifications`
+- `PATCH /notifications/{notificationId}/read`
 
----
+### 5.5 Push mobile
 
-## 3. Portail Administration (Filament PHP)
-*Préfixe de route : `/abba`*
+- `POST /mobile/device-token`
+- `POST /mobile/device-token/revoke`
 
-L'ensemble de ces routes est généré automatiquement par le framework Filament pour gérer les opérations CRUD complètes :
-- `GET /abba/admin-dashboard` : Tableau de bord d'administration global.
-- `GET|POST /abba/projects/*` : Ressources complètes de gestion de projets (Index, Create, Edit, Report).
-- `GET|POST /abba/tasks/*` : Ressources complètes des tâches (Index, Create, Edit, vues Kanban et Calendar).
-- `GET|POST /abba/users/*` : Ressources complètes de gestion des utilisateurs.
+### 5.6 Timesheets
+
+- `GET /timesheets`
+- `POST /timesheets`
+- `PATCH /timesheets/{timesheet}`
+- `DELETE /timesheets/{timesheet}`
+
+## 6) Endpoints web client (principaux)
+
+Prefix: `/client`
+
+- Dashboard:
+  - `GET /dashboard`
+  - `GET /dashboard/snapshot`
+- Projets:
+  - `GET /projects`
+  - `GET /projects/{project}`
+  - `GET /projects/{project}/snapshot`
+  - `POST /projects/{project}/tasks/{task}/move`
+  - `POST /projects/{project}/members`
+  - `PATCH /projects/{project}/members/{member}`
+  - `DELETE /projects/{project}/members/{member}`
+- Communication:
+  - `POST /projects/{project}/messages`
+  - `POST /projects/{project}/files`
+  - `GET /projects/{project}/files/{projectFile}/download`
+- Taches:
+  - `GET /tasks`
+  - `GET /tasks/calendar`
+  - `POST /tasks/{task}/comments`
+  - `POST /tasks/{task}/subtasks`
+  - `PATCH /tasks/{task}/subtasks/{subtask}`
+- Rapports:
+  - `GET /projects/{project}/report`
+  - `GET /projects/{project}/report/download` (JSON)
+  - `GET /projects/{project}/report/download/pdf`
+- Timesheets:
+  - `GET /timesheets`
+  - `POST /timesheets`
+  - `PATCH /timesheets/{timesheet}`
+  - `DELETE /timesheets/{timesheet}`
+
+## 7) Roadmap technique conseillee
+
+### Phase A - Identite et acces
+
+- Ajouter roles `manager` et `client` (global + projet)
+- OAuth Google (Socialite)
+- 2FA TOTP + recovery codes
+- Preferences de notifications par utilisateur
+
+### Phase B - Agile avance
+
+- Entite `sprints` (planning, objectif, statut)
+- Entite `stories` (points, priorite, sprint)
+- Burndown chart et velocity par sprint
+- WIP limits parametrables
+
+### Phase C - Planification et pilotage
+
+- Gantt interactif
+- Dependances taches
+- Milestones
+- Alerting retard et chemin critique
+
+### Phase D - Experience client externe
+
+- Entite `clients` + portail dedie
+- Validation livrables
+- Facturation et suivi support
+- Exports CSV/Excel et recherche globale full-text

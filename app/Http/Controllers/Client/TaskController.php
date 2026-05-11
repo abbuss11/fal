@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use App\Models\TaskComment;
+use App\Models\TaskTag;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
@@ -21,6 +22,7 @@ class TaskController extends Controller
 
         $status = $request->string('status')->toString();
         $projectId = $request->integer('project_id');
+        $tagId = $request->integer('tag_id');
 
         $tasksQuery = $user->visibleTasksQuery()
             ->with(['project', 'assignee'])
@@ -39,6 +41,10 @@ class TaskController extends Controller
             $tasksQuery->where('project_id', $projectId);
         }
 
+        if ($tagId > 0) {
+            $tasksQuery->whereHas('tags', fn ($query) => $query->where('task_tags.id', $tagId));
+        }
+
         $tasks = $tasksQuery
             ->paginate(12)
             ->withQueryString();
@@ -46,13 +52,18 @@ class TaskController extends Controller
         $projects = $user->visibleProjectsQuery()
             ->orderBy('name')
             ->get(['id', 'name']);
+        $tags = TaskTag::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return view('client.tasks.index', [
             'tasks' => $tasks,
             'projects' => $projects,
+            'tags' => $tags,
             'statuses' => Task::statusOptions(),
             'selectedStatus' => $status,
             'selectedProjectId' => $projectId > 0 ? $projectId : null,
+            'selectedTagId' => $tagId > 0 ? $tagId : null,
         ]);
     }
 

@@ -14,7 +14,7 @@
             margin: 0;
         }
         .title {
-            border-bottom: 2px solid #d8602a;
+            border-bottom: 2px solid #0f6d93;
             padding-bottom: 8px;
             margin-bottom: 16px;
         }

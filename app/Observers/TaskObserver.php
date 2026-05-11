@@ -137,6 +137,15 @@ class TaskObserver
             $task->status = Task::STATUS_DOING;
         }
 
+        if (
+            $task->status === Task::STATUS_DONE
+            && $task->exists
+            && $task->dependencies()->where('status', '!=', Task::STATUS_DONE)->exists()
+        ) {
+            $task->status = Task::STATUS_DOING;
+            $task->is_in_review = true;
+        }
+
         if ($task->status !== Task::STATUS_DOING) {
             $task->is_in_review = false;
         }

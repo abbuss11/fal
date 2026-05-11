@@ -33,14 +33,19 @@ class Project extends Model
 
     protected $fillable = [
         'owner_id',
+        'client_id',
         'name',
         'description',
         'objective',
         'status',
+        'is_template',
+        'template_name',
         'priority',
         'budget',
         'start_date',
         'due_date',
+        'is_archived',
+        'archived_at',
         'completed_at',
     ];
 
@@ -53,6 +58,9 @@ class Project extends Model
             'budget' => 'decimal:2',
             'start_date' => 'date',
             'due_date' => 'date',
+            'is_template' => 'boolean',
+            'is_archived' => 'boolean',
+            'archived_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
     }
@@ -60,6 +68,11 @@ class Project extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function members(): BelongsToMany

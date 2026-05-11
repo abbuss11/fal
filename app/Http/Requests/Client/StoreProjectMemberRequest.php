@@ -25,9 +25,8 @@ class StoreProjectMemberRequest extends FormRequest
     {
         return [
             'user_id' => ['required', 'exists:users,id'],
-            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MEMBER])],
+            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MANAGER, User::ROLE_MEMBER, User::ROLE_CLIENT])],
             'is_active' => ['nullable', 'boolean'],
         ];
     }
 }
-

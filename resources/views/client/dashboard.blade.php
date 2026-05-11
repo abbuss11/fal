@@ -33,8 +33,8 @@
                 position: relative;
                 overflow: hidden;
                 background:
-                    radial-gradient(circle at 12% 16%, rgba(216, 96, 42, 0.14), transparent 36%),
-                    radial-gradient(circle at 92% 8%, rgba(15, 118, 110, 0.16), transparent 32%),
+                    radial-gradient(circle at 12% 16%, rgba(15, 109, 147, 0.18), transparent 36%),
+                    radial-gradient(circle at 92% 8%, rgba(27, 161, 190, 0.16), transparent 32%),
                     rgba(255, 255, 255, 0.9);
             }
             .studio-dashboard-neo::before {
@@ -168,7 +168,7 @@
                 display: block;
                 height: 100%;
                 border-radius: 999px;
-                background: linear-gradient(90deg, #d8602a 0%, #0f766e 100%);
+                background: linear-gradient(90deg, #0f6d93 0%, #1ba1be 100%);
             }
             .neo-list-item {
                 border: 1px solid var(--client-line);
@@ -271,12 +271,12 @@
                             <svg id="velocity-chart" viewBox="0 0 420 170" class="h-[170px] w-full" role="img" aria-label="Courbe de velocite">
                                 <defs>
                                     <linearGradient id="velocityAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stop-color="#d8602a" stop-opacity="0.35"></stop>
-                                        <stop offset="100%" stop-color="#0f766e" stop-opacity="0.05"></stop>
+                                        <stop offset="0%" stop-color="#0f6d93" stop-opacity="0.35"></stop>
+                                        <stop offset="100%" stop-color="#1ba1be" stop-opacity="0.05"></stop>
                                     </linearGradient>
                                 </defs>
                                 <path id="velocity-area" fill="url(#velocityAreaGradient)"></path>
-                                <path id="velocity-line" fill="none" stroke="#d8602a" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>
+                                <path id="velocity-line" fill="none" stroke="#0f6d93" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"></path>
                                 <g id="velocity-dots"></g>
                             </svg>
                             <div id="velocity-labels" class="neo-velocity-labels">
@@ -513,7 +513,7 @@
 
                     dots.innerHTML = mapped.map((point) => {
                         return `
-                            <circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="4.2" fill="#0f766e" stroke="#ffffff" stroke-width="2">
+                            <circle cx="${point.x.toFixed(2)}" cy="${point.y.toFixed(2)}" r="4.2" fill="#1ba1be" stroke="#ffffff" stroke-width="2">
                                 <title>${point.value}</title>
                             </circle>
                         `;
@@ -556,8 +556,8 @@
                     const doingStop = (todoPct + doingPct).toFixed(2);
                     ring.style.background = `conic-gradient(
                         #0ea5e9 0% ${todoStop}%,
-                        #f59e0b ${todoStop}% ${doingStop}%,
-                        #10b981 ${doingStop}% 100%
+                        #0f6d93 ${todoStop}% ${doingStop}%,
+                        #1ba1be ${doingStop}% 100%
                     )`;
                 },
                 renderProjectLoad(projectLoad) {

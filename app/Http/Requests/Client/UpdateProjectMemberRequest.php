@@ -24,9 +24,8 @@ class UpdateProjectMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MEMBER])],
+            'role' => ['required', Rule::in([User::ROLE_PROJECT_MANAGER, User::ROLE_MANAGER, User::ROLE_MEMBER, User::ROLE_CLIENT])],
             'is_active' => ['required', 'boolean'],
         ];
     }
 }
-

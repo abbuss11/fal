@@ -315,203 +315,105 @@
     }
 
     .jira-board-shell {
-        @apply grid overflow-hidden rounded-2xl border border-[#2b3140] bg-[#111620];
-        grid-template-columns: 54px 240px minmax(0, 1fr);
-        min-height: 74vh;
+        @apply overflow-hidden rounded-2xl border border-slate-200 bg-white;
+        box-shadow: 0 26px 48px -42px rgba(15, 23, 42, 0.52);
     }
 
-    .jira-rail {
-        border-right: 1px solid #2b3140;
-        @apply flex flex-col items-center gap-2 bg-[#0f131c] px-2 py-3;
+    .jira-board-header {
+        @apply flex flex-col gap-3 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white px-4 py-4 lg:flex-row lg:items-start lg:justify-between;
     }
 
-    .jira-rail-icon {
-        @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent text-[10px] font-semibold text-slate-300 transition;
-        background: #1a2130;
+    .jira-board-kicker {
+        @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
     }
 
-    .jira-rail-icon:hover {
-        border-color: #3d4c66;
-        color: #ffffff;
+    .jira-board-title-row {
+        @apply mt-1 flex flex-wrap items-center gap-2;
     }
 
-    .jira-rail-icon-active {
-        border-color: #4f6fae;
-        background: #1f3870;
-        color: #9fc0ff;
+    .jira-board-title-row h2 {
+        @apply text-2xl font-semibold text-slate-900;
     }
 
-    .jira-workspace-sidebar {
-        border-right: 1px solid #2b3140;
-        @apply flex flex-col bg-[#171b24] p-4 text-slate-200;
+    .jira-project-code {
+        @apply rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600;
     }
 
-    .jira-brand-title {
-        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400;
+    .jira-board-note {
+        @apply mt-2 text-xs text-slate-500;
     }
 
-    .jira-brand h3 {
-        @apply mt-1 text-xl font-semibold text-white;
+    .jira-toolbar {
+        @apply flex flex-col gap-3 border-b border-slate-200 bg-slate-50/70 px-4 py-3 lg:flex-row lg:items-center lg:justify-between;
     }
 
-    .jira-side-nav {
-        @apply mt-5 space-y-1;
-    }
-
-    .jira-side-link {
-        @apply block rounded-lg px-3 py-2 text-sm text-slate-300 transition;
-    }
-
-    .jira-side-link:hover {
-        @apply bg-[#202634] text-white;
-    }
-
-    .jira-side-block {
-        @apply mt-6;
-    }
-
-    .jira-side-block-title {
-        @apply text-xs font-semibold uppercase tracking-[0.1em] text-slate-500;
-    }
-
-    .jira-project-link {
-        @apply mt-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-200 transition;
-    }
-
-    .jira-project-link:hover {
-        @apply bg-[#202634] text-white;
-    }
-
-    .jira-project-link-active {
-        @apply bg-[#1f3870] text-[#9fc0ff];
-    }
-
-    .jira-project-dot {
-        @apply inline-flex h-2 w-2 rounded-full bg-[#5aa2ff];
-    }
-
-    .jira-side-note {
-        border: 1px solid #2b3140;
-        @apply mt-auto rounded-xl bg-[#121722] p-3 text-xs text-slate-400;
-    }
-
-    .jira-workspace-main {
-        @apply bg-[#131722];
-    }
-
-    .jira-topbar {
-        border-bottom: 1px solid #2b3140;
-        @apply flex flex-wrap items-center justify-between gap-3 bg-[#1a1f2b] px-4 py-3;
-    }
-
-    .jira-search-wrap {
-        @apply inline-flex min-w-[230px] items-center gap-2 rounded-md border border-[#3a4257] bg-[#111621] px-3 py-2;
+    .jira-board-search-wrap {
+        @apply inline-flex w-full max-w-2xl items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5;
     }
 
     .jira-search-lens {
         @apply text-[11px] font-semibold text-slate-500;
     }
 
-    .jira-search {
-        @apply w-full border-0 bg-transparent p-0 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-0;
-    }
-
-    .jira-project-header {
-        border-bottom: 1px solid #2b3140;
-        @apply px-5 py-4;
-    }
-
-    .jira-project-meta {
-        @apply text-sm text-slate-400;
-    }
-
-    .jira-project-title-row {
-        @apply mt-1 flex flex-wrap items-center gap-3;
-    }
-
-    .jira-project-title-row h2 {
-        @apply text-[2rem] font-semibold text-white;
-    }
-
-    .jira-project-code {
-        @apply rounded-md border border-[#3a4257] bg-[#171e2b] px-2 py-1 text-xs font-semibold text-slate-300;
-    }
-
-    .jira-project-tabs {
-        @apply mt-4 flex flex-wrap items-center gap-4;
-    }
-
-    .jira-project-tab {
-        @apply border-b-2 border-transparent pb-2 text-sm font-medium text-slate-300 transition;
-    }
-
-    .jira-project-tab:hover {
-        @apply text-white;
-    }
-
-    .jira-project-tab-active {
-        @apply border-[#5aa2ff] text-[#8cb4ff];
-    }
-
-    .jira-toolbar {
-        @apply mt-4 flex flex-wrap items-center justify-between gap-3 px-5;
-    }
-
-    .jira-board-search-wrap {
-        @apply inline-flex min-w-[220px] items-center gap-2 rounded-md border border-[#3a4257] bg-[#161b27] px-3 py-2;
-    }
-
     .jira-board-search {
-        @apply w-full border-0 bg-transparent p-0 text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:ring-0;
+        @apply w-full border-0 bg-transparent p-0 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-0;
+    }
+
+    .jira-toolbar-counts {
+        @apply flex flex-wrap items-center gap-2;
     }
 
     .jira-pill-btn {
-        @apply rounded-md border border-[#374053] bg-[#1a2232] px-3 py-2 text-xs font-semibold text-slate-200 transition;
+        @apply rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition;
     }
 
     .jira-pill-btn:hover {
-        @apply border-[#4f6fae] text-white;
+        @apply border-slate-400 text-slate-900;
     }
 
     .jira-pill-active {
-        @apply border-[#4f6fae] bg-[#1f3870] text-[#9fc0ff];
+        @apply border-sky-500 bg-sky-50 text-sky-700;
     }
 
     .jira-pill-btn-primary {
-        @apply rounded-md bg-[#4e83e7] px-3 py-2 text-xs font-semibold text-white transition;
+        @apply rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition;
     }
 
     .jira-pill-btn-primary:hover {
-        @apply bg-[#6a97ec];
+        @apply bg-slate-700;
     }
 
     .jira-chip {
-        @apply inline-flex items-center rounded-full border border-[#3a4257] bg-[#111621] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300;
+        @apply inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600;
+    }
+
+    .jira-chip strong {
+        @apply text-slate-900;
     }
 
     .jira-sprint-metrics {
-        @apply mt-3 grid gap-3 px-5 md:grid-cols-2 xl:grid-cols-4;
+        @apply mt-3 grid gap-3 px-4 md:grid-cols-2 xl:grid-cols-4;
     }
 
     .jira-metric-card {
-        @apply rounded-xl border border-[#2b3140] bg-[#171c28] px-3 py-3;
+        @apply rounded-xl border border-slate-200 bg-slate-50 px-3 py-3;
     }
 
     .jira-metric-card p:first-child {
-        @apply text-[11px] uppercase tracking-wide text-slate-400;
+        @apply text-[11px] uppercase tracking-wide text-slate-500;
     }
 
     .jira-metric-card p:last-child {
-        @apply mt-1 text-2xl font-semibold text-white;
+        @apply mt-1 text-2xl font-semibold text-slate-900;
     }
 
     .jira-board-grid {
-        @apply mt-4 grid gap-3 px-5 pb-5 xl:grid-cols-4;
+        @apply mt-3 grid gap-3 px-4 pb-4 xl:grid-cols-4;
     }
 
     .jira-column {
-        border: 1px solid #2b3140;
-        @apply rounded-xl bg-[#161b27] p-2;
+        border: 1px solid #e2e8f0;
+        @apply rounded-xl bg-slate-50 p-2;
     }
 
     .jira-column-header {
@@ -519,62 +421,58 @@
     }
 
     .jira-column-header h3 {
-        @apply text-xs font-semibold uppercase tracking-[0.08em] text-slate-300;
+        @apply text-xs font-semibold uppercase tracking-[0.08em] text-slate-600;
     }
 
     .jira-count {
-        @apply rounded-md bg-[#252d3d] px-2 py-0.5 text-[11px] font-semibold text-slate-200;
+        @apply rounded-md bg-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-700;
     }
 
     .jira-column-body {
         min-height: 220px;
-        border: 1px dashed #33405a;
-        @apply rounded-lg bg-[#111621] p-2;
+        border: 1px dashed #cbd5e1;
+        @apply rounded-lg bg-white p-2;
     }
 
     .jira-task-card {
-        border: 1px solid #303a4f;
-        @apply rounded-lg bg-[#1f2430] p-3 shadow-none;
+        border: 1px solid #d8e0ec;
+        @apply rounded-lg bg-white p-3;
     }
 
     .jira-task-card:hover {
-        border-color: #4a5f86;
+        border-color: #7ea2db;
         transform: translateY(-1px);
-        box-shadow: 0 12px 22px -18px rgba(148, 177, 232, 0.5);
+        box-shadow: 0 10px 22px -20px rgba(15, 23, 42, 0.75);
     }
 
     .jira-task-title {
-        @apply text-sm font-semibold text-white;
+        @apply text-sm font-semibold text-slate-900;
     }
 
     .jira-task-date {
-        @apply mt-2 inline-flex rounded-md border border-[#44506a] px-2 py-0.5 text-xs text-slate-300;
+        @apply inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600;
     }
 
     .jira-task-key {
-        @apply mt-2 text-xs font-semibold uppercase tracking-wide text-[#8cb4ff];
+        @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
     }
 
     .jira-task-meta {
-        @apply mt-2 flex items-center justify-between text-xs text-slate-400;
+        @apply mt-2 flex items-center justify-between gap-2 text-xs text-slate-500;
     }
 
     .jira-task-avatar {
-        @apply inline-flex h-6 w-6 items-center justify-center rounded-full border border-[#4b556d] bg-[#313946] text-[10px] font-semibold text-slate-200;
-    }
-
-    .jira-task-subtasks {
-        @apply mt-2 text-xs text-slate-400;
+        @apply inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-[10px] font-semibold text-slate-700;
     }
 
     .jira-empty-col {
-        @apply rounded-md bg-[#161c28] px-3 py-2 text-xs text-slate-400;
+        @apply rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-2 text-xs text-slate-500;
     }
 
     .board-column-active {
-        border-color: #4e83e7 !important;
-        background: #161f33 !important;
-        box-shadow: inset 0 0 0 1px rgba(78, 131, 231, 0.35);
+        border-color: #3b82f6 !important;
+        background: #eff6ff !important;
+        box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.3);
     }
 
     .saas-hero {
@@ -689,6 +587,122 @@
         background: color-mix(in srgb, var(--client-accent) 12%, white);
     }
 
+    .calendar-grid-shell {
+        @apply rounded-3xl border p-3 sm:p-4;
+        border-color: color-mix(in srgb, var(--client-accent) 20%, var(--client-line));
+        background:
+            radial-gradient(circle at 10% 0%, rgba(27, 161, 190, 0.14), transparent 34%),
+            linear-gradient(180deg, #f8fcff 0%, #edf5fb 100%);
+    }
+
+    .calendar-weekday-chip {
+        @apply rounded-xl border px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em];
+        border-color: color-mix(in srgb, var(--client-accent) 20%, var(--client-line));
+        color: #4c677c;
+        background: color-mix(in srgb, white 86%, #e7f3fa);
+    }
+
+    .calendar-day-card {
+        @apply relative overflow-hidden rounded-2xl border bg-white p-3 transition;
+        border-color: color-mix(in srgb, var(--client-accent) 16%, var(--client-line));
+        min-height: 188px;
+    }
+
+    @media (min-width: 1024px) {
+        .calendar-day-card {
+            min-height: 210px;
+        }
+    }
+
+    .calendar-day-card::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--client-accent) 0%, var(--client-accent-soft) 100%);
+        opacity: 0.2;
+    }
+
+    .calendar-day-card:hover {
+        transform: translateY(-1px);
+        border-color: color-mix(in srgb, var(--client-accent) 34%, var(--client-line));
+        box-shadow: 0 18px 34px -28px rgba(15, 23, 42, 0.42);
+    }
+
+    .calendar-day-card-outside {
+        background: linear-gradient(180deg, #f8fafc 0%, #f2f7fb 100%);
+        opacity: 0.72;
+    }
+
+    .calendar-day-card-today {
+        border-color: color-mix(in srgb, var(--client-accent) 42%, var(--client-line));
+        box-shadow: inset 0 0 0 1px rgba(15, 109, 147, 0.16);
+    }
+
+    .calendar-day-week {
+        @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+    }
+
+    .calendar-day-date {
+        @apply mt-0.5 text-sm font-semibold text-slate-900;
+    }
+
+    .calendar-day-count {
+        @apply inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600;
+    }
+
+    .calendar-task-card {
+        @apply block rounded-xl border bg-white px-2.5 py-2 text-xs text-slate-600 transition;
+        border-color: var(--client-line);
+    }
+
+    .calendar-task-card:hover {
+        border-color: color-mix(in srgb, var(--client-accent) 36%, var(--client-line));
+        background: #fbfdff;
+    }
+
+    .calendar-task-card-late {
+        border-color: color-mix(in srgb, #f43f5e 42%, var(--client-line));
+        background: linear-gradient(180deg, #fffdfd 0%, #fff4f6 100%);
+    }
+
+    .calendar-task-title {
+        @apply font-semibold text-slate-800;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .calendar-day-empty {
+        @apply rounded-xl border border-dashed px-3 py-2 text-center text-xs text-slate-400;
+        border-color: color-mix(in srgb, var(--client-accent) 22%, var(--client-line));
+        background: rgba(255, 255, 255, 0.72);
+    }
+
+    .portfolio-command-shell {
+        border: 1px solid color-mix(in srgb, var(--client-accent) 20%, var(--client-line));
+        border-radius: 1rem;
+        background: linear-gradient(145deg, #ffffff 0%, #f3f9fd 100%);
+    }
+
+    .portfolio-field {
+        border: 1px solid var(--client-line);
+        border-radius: 0.75rem;
+        background: #fff;
+        color: #0f172a;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        padding: 0.6rem 0.8rem;
+        width: 100%;
+    }
+
+    .portfolio-field:focus {
+        outline: none;
+        border-color: color-mix(in srgb, var(--client-accent) 45%, var(--client-line));
+        box-shadow: 0 0 0 3px rgba(15, 109, 147, 0.12);
+    }
+
     .portfolio-toggle {
         border: 1px solid var(--client-line);
         border-radius: 0.7rem;
@@ -711,30 +725,72 @@
         color: var(--client-accent);
     }
 
-    @media (max-width: 1400px) {
-        .jira-board-shell {
-            grid-template-columns: 54px minmax(0, 1fr);
-        }
+    .portfolio-stage-card {
+        border: 1px solid color-mix(in srgb, var(--client-accent) 16%, var(--client-line));
+        border-radius: 1rem;
+        background: linear-gradient(150deg, #fff 0%, #f4f9fc 100%);
+        padding: 0.95rem;
+    }
 
-        .jira-workspace-sidebar {
-            display: none;
-        }
+    .portfolio-stage-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+
+    .portfolio-stage-progress {
+        margin-top: 0.6rem;
+        height: 0.35rem;
+        border-radius: 999px;
+        background: #e2e8f0;
+        overflow: hidden;
+    }
+
+    .portfolio-stage-progress > span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+    }
+
+    .portfolio-card {
+        border: 1px solid color-mix(in srgb, var(--client-accent) 14%, var(--client-line));
+        border-radius: 1.1rem;
+        padding: 1rem;
+        background: linear-gradient(160deg, #ffffff 0%, #f8fcff 68%, #edf7fc 100%);
+        box-shadow: 0 18px 38px -34px rgba(15, 23, 42, 0.45);
+    }
+
+    .portfolio-ring {
+        --progress: 0;
+        width: 4.8rem;
+        height: 4.8rem;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background:
+            radial-gradient(circle at center, white 60%, transparent 61%),
+            conic-gradient(var(--client-accent) calc(var(--progress) * 1%), #dbe7f1 0);
+    }
+
+    .portfolio-ring > span {
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .portfolio-empty {
+        border: 1px dashed color-mix(in srgb, var(--client-accent) 35%, var(--client-line));
+        border-radius: 1rem;
+        padding: 1.25rem;
+        background: color-mix(in srgb, var(--client-accent) 4%, white);
+        text-align: center;
     }
 
     @media (max-width: 980px) {
-        .jira-board-shell {
-            grid-template-columns: 1fr;
-        }
-
-        .jira-rail {
-            display: none;
-        }
-
-        .jira-topbar {
-            @apply px-3;
-        }
-
-        .jira-project-header {
+        .jira-board-header {
             @apply px-3;
         }
 

@@ -30,7 +30,22 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::get('/dashboard', ClientDashboardController::class)->name('dashboard');
     Route::get('/dashboard/snapshot', [ClientDashboardController::class, 'snapshot'])->name('dashboard.snapshot');
     Route::get('/projects', [ClientProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/create', [ClientProjectController::class, 'create'])
+        ->middleware('permission:projects.create')
+        ->name('projects.create');
+    Route::post('/projects', [ClientProjectController::class, 'store'])
+        ->middleware('permission:projects.create')
+        ->name('projects.store');
     Route::get('/projects/{project}', [ClientProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/edit', [ClientProjectController::class, 'edit'])
+        ->middleware('permission:projects.update')
+        ->name('projects.edit');
+    Route::patch('/projects/{project}', [ClientProjectController::class, 'update'])
+        ->middleware('permission:projects.update')
+        ->name('projects.update');
+    Route::delete('/projects/{project}', [ClientProjectController::class, 'destroy'])
+        ->middleware('permission:projects.delete')
+        ->name('projects.destroy');
     Route::post('/projects/{project}/tasks/{task}/move', [ClientProjectController::class, 'moveTask'])
         ->middleware('permission:tasks.move')
         ->name('projects.tasks.move');
@@ -66,6 +81,21 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::get('/projects/{project}/report/download', [ClientProjectReportController::class, 'download'])->name('projects.report.download');
     Route::get('/projects/{project}/report/download/pdf', [ClientProjectReportController::class, 'downloadPdf'])->name('projects.report.download-pdf');
     Route::get('/tasks', [ClientTaskController::class, 'index'])->name('tasks.index');
+    Route::get('/tasks/create', [ClientTaskController::class, 'create'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.create');
+    Route::post('/tasks', [ClientTaskController::class, 'store'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.store');
+    Route::get('/tasks/{task}/edit', [ClientTaskController::class, 'edit'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.edit');
+    Route::patch('/tasks/{task}', [ClientTaskController::class, 'update'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.update');
+    Route::delete('/tasks/{task}', [ClientTaskController::class, 'destroy'])
+        ->middleware('permission:tasks.delete')
+        ->name('tasks.destroy');
     Route::get('/tasks/calendar', [ClientTaskController::class, 'calendar'])->name('tasks.calendar');
     Route::post('/tasks/{task}/comments', [ClientTaskController::class, 'storeComment'])
         ->middleware('permission:comments.create')

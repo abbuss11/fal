@@ -27,6 +27,9 @@
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('client.projects.index') }}" class="client-button-muted">Retour projets</a>
                 <a href="{{ route('client.tasks.index', ['project_id' => $project->id]) }}" class="client-button-muted">Tableau des taches</a>
+                @if ($canManageProject && auth()->user()?->hasPermission('projects.update'))
+                    <a href="{{ route('client.projects.edit', $project) }}" class="client-button-muted">Modifier projet</a>
+                @endif
                 <a href="{{ route('client.projects.report', $project) }}" class="client-button">Rapport complet</a>
                 @if ($canManageProject)
                     <form method="POST" action="{{ route('client.projects.duplicate', $project) }}" class="inline">
@@ -185,183 +188,121 @@
 
         <section id="board" x-show="tab === 'board'" class="space-y-4" x-cloak>
             <div class="jira-board-shell">
-                <aside class="jira-rail">
-                    <button type="button" class="jira-rail-icon jira-rail-icon-active" aria-label="Board">
-                        <span>J</span>
-                    </button>
-                    <button type="button" class="jira-rail-icon" aria-label="Recent">
-                        <span>R</span>
-                    </button>
-                    <button type="button" class="jira-rail-icon" aria-label="Apps">
-                        <span>A</span>
-                    </button>
-                    <div class="mt-auto space-y-2">
-                        <button type="button" class="jira-rail-icon" aria-label="Team">
-                            <span>T</span>
-                        </button>
-                        <button type="button" class="jira-rail-icon" aria-label="Settings">
-                            <span>S</span>
-                        </button>
-                    </div>
-                </aside>
-
-                <aside class="jira-workspace-sidebar">
-                    <div class="jira-brand">
-                        <p class="jira-brand-title">Spaces</p>
-                        <h3>Draco</h3>
-                    </div>
-
-                    <nav class="jira-side-nav">
-                        <a href="javascript:void(0)" class="jira-side-link">For you</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Recent</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Starred</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Apps</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Plans</a>
-                    </nav>
-
-                    <div class="jira-side-block">
-                        <p class="jira-side-block-title">Recent</p>
-                        <a href="javascript:void(0)" class="jira-project-link jira-project-link-active">
-                            <span class="jira-project-dot"></span>
-                            <span>{{ $project->name }}</span>
-                        </a>
-                    </div>
-
-                    <div class="jira-side-note">
-                        <p>Mode <span data-board-mode-label>Kanban</span></p>
-                        <p class="mt-1">Glisse une tache pour changer de colonne ou de position.</p>
-                    </div>
-                </aside>
-
-                <div class="jira-workspace-main">
-                    <header class="jira-topbar">
-                        <label class="jira-search-wrap" for="jira-global-search">
-                            <span class="jira-search-lens">Q</span>
-                            <input id="jira-global-search" class="jira-search" type="text" placeholder="Search">
-                        </label>
-
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a href="{{ route('client.tasks.index', ['project_id' => $project->id]) }}" class="jira-pill-btn-primary">Create</a>
-                            <button type="button" class="jira-pill-btn" :class="boardMode === 'kanban' ? 'jira-pill-active' : ''" @click="setBoardMode('kanban')">Kanban</button>
-                            <button type="button" class="jira-pill-btn" :class="boardMode === 'scrum' ? 'jira-pill-active' : ''" @click="setBoardMode('scrum')">Scrum</button>
-                        </div>
-                    </header>
-
-                    <section class="jira-project-header">
-                        <p class="jira-project-meta">Spaces</p>
-                        <div class="jira-project-title-row">
+                <header class="jira-board-header">
+                    <div>
+                        <p class="jira-board-kicker">Tableau projet</p>
+                        <div class="jira-board-title-row">
                             <h2>{{ $project->name }}</h2>
                             <span class="jira-project-code">SCRUM-{{ $project->id }}</span>
                         </div>
-                        <nav class="jira-project-tabs">
-                            <a href="javascript:void(0)" class="jira-project-tab">Summary</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Backlog</a>
-                            <a href="javascript:void(0)" class="jira-project-tab jira-project-tab-active">Board</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Code</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Timeline</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Docs</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Development</a>
-                        </nav>
-                    </section>
-
-                    <article class="jira-toolbar">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <label class="jira-board-search-wrap" for="jira-board-search">
-                                <span class="jira-search-lens">Q</span>
-                                <input
-                                    id="jira-board-search"
-                                    type="text"
-                                    class="jira-board-search"
-                                    placeholder="Search board"
-                                    x-model="boardQuery"
-                                    @input.debounce.150ms="applyBoardFilter()"
-                                >
-                            </label>
-                            <span class="jira-chip">Board</span>
-                            <span class="jira-chip">Live</span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" class="jira-pill-btn-primary">Complete sprint</button>
-                            <button type="button" class="jira-pill-btn">Group</button>
-                            <button type="button" class="jira-pill-btn">Filter</button>
-                            <button type="button" class="jira-pill-btn">Display</button>
-                        </div>
-                    </article>
-
-                    <article class="jira-sprint-metrics" x-show="boardMode === 'scrum'" x-cloak>
-                        <div class="jira-metric-card">
-                            <p>Backlog produit</p>
-                            <p data-scrum-metric="backlog">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>Sprint en cours</p>
-                            <p data-scrum-metric="sprint">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>En revue</p>
-                            <p data-scrum-metric="review">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>Terminees</p>
-                            <p data-scrum-metric="done">0</p>
-                        </div>
-                    </article>
-
-                    <div class="jira-board-grid">
-                        @foreach ($statusOrder as $status)
-                            @php
-                                $scrumLabel = match ($status) {
-                                    \App\Models\Task::STATUS_TODO => 'A FAIRE',
-                                    \App\Models\Task::STATUS_DOING => 'EN COURS',
-                                    'review' => 'EN COURS DE REVUE',
-                                    \App\Models\Task::STATUS_DONE => 'TERMINE',
-                                    default => strtoupper($status),
-                                };
-                            @endphp
-                            <article class="jira-column">
-                                <header class="jira-column-header">
-                                    <h3
-                                        data-board-title="{{ $status }}"
-                                        data-kanban-label="{{ $boardStatusLabels[$status] ?? strtoupper($status) }}"
-                                        data-scrum-label="{{ $scrumLabel }}"
-                                    >
-                                        {{ $boardStatusLabels[$status] ?? strtoupper($status) }}
-                                    </h3>
-                                    <span class="jira-count board-count" data-status-count="{{ $status }}">
-                                        {{ count($tasksByStatus[$status] ?? []) }}
-                                    </span>
-                                </header>
-
-                                <div class="space-y-3 board-column jira-column-body" data-board-column="{{ $status }}">
-                                    @forelse ($tasksByStatus[$status] ?? [] as $task)
-                                        @php
-                                            $assigneeName = $task->assignee?->name ?? 'Non assigne';
-                                            $assigneeInitial = strtoupper(substr($assigneeName, 0, 1));
-                                            $doneSubtasks = $task->subtasks->where('is_completed', true)->count();
-                                            $totalSubtasks = $task->subtasks->count();
-                                        @endphp
-                                        <article
-                                            class="board-card jira-task-card"
-                                            draggable="true"
-                                            data-task-id="{{ $task->id }}"
-                                            data-task-title="{{ $task->title }}"
-                                        >
-                                            <p class="jira-task-title">{{ $task->title }}</p>
-                                            <p class="jira-task-date">{{ $task->due_date?->format('M d, Y') ?? 'Aucune date' }}</p>
-                                            <p class="jira-task-key">SCRUM-{{ $task->id }}</p>
-                                            <div class="jira-task-meta">
-                                                <span>{{ $priorityLabels[$task->priority] ?? ucfirst((string) $task->priority) }}</span>
-                                                <span class="jira-task-avatar" title="{{ $assigneeName }}">{{ $assigneeInitial }}</span>
-                                            </div>
-                                            <p class="jira-task-subtasks">Sous-taches: {{ $doneSubtasks }}/{{ $totalSubtasks }}</p>
-                                        </article>
-                                    @empty
-                                        <p class="jira-empty-col">Aucune tache</p>
-                                    @endforelse
-                                </div>
-                            </article>
-                        @endforeach
+                        <p class="jira-board-note">
+                            Mode <span data-board-mode-label>Kanban</span> |
+                            Glisse une tache pour changer de colonne ou de position.
+                        </p>
                     </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if (auth()->user()?->hasPermission('tasks.create'))
+                            <a href="{{ route('client.tasks.create', ['project_id' => $project->id]) }}" class="jira-pill-btn-primary">Nouvelle tache</a>
+                        @endif
+                        <button type="button" class="jira-pill-btn" :class="boardMode === 'kanban' ? 'jira-pill-active' : ''" @click="setBoardMode('kanban')">Kanban</button>
+                        <button type="button" class="jira-pill-btn" :class="boardMode === 'scrum' ? 'jira-pill-active' : ''" @click="setBoardMode('scrum')">Scrum</button>
+                    </div>
+                </header>
+
+                <article class="jira-toolbar">
+                    <label class="jira-board-search-wrap" for="jira-board-search">
+                        <span class="jira-search-lens">Q</span>
+                        <input
+                            id="jira-board-search"
+                            type="text"
+                            class="jira-board-search"
+                            placeholder="Rechercher une tache, un numero ou un assigne"
+                            x-model="boardQuery"
+                            @input.debounce.150ms="applyBoardFilter()"
+                        >
+                    </label>
+                    <div class="jira-toolbar-counts">
+                        <span class="jira-chip">A faire: <strong data-status-inline-count="todo">{{ count($tasksByStatus['todo'] ?? []) }}</strong></span>
+                        <span class="jira-chip">En cours: <strong data-status-inline-count="doing">{{ count($tasksByStatus['doing'] ?? []) }}</strong></span>
+                        <span class="jira-chip">Revue: <strong data-status-inline-count="review">{{ count($tasksByStatus['review'] ?? []) }}</strong></span>
+                        <span class="jira-chip">Terminees: <strong data-status-inline-count="done">{{ count($tasksByStatus['done'] ?? []) }}</strong></span>
+                    </div>
+                </article>
+
+                <article class="jira-sprint-metrics" x-show="boardMode === 'scrum'" x-cloak>
+                    <div class="jira-metric-card">
+                        <p>Backlog produit</p>
+                        <p data-scrum-metric="backlog">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>Sprint en cours</p>
+                        <p data-scrum-metric="sprint">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>En revue</p>
+                        <p data-scrum-metric="review">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>Terminees</p>
+                        <p data-scrum-metric="done">0</p>
+                    </div>
+                </article>
+
+                <div class="jira-board-grid">
+                    @foreach ($statusOrder as $status)
+                        @php
+                            $scrumLabel = match ($status) {
+                                \App\Models\Task::STATUS_TODO => 'A FAIRE',
+                                \App\Models\Task::STATUS_DOING => 'EN COURS',
+                                'review' => 'EN COURS DE REVUE',
+                                \App\Models\Task::STATUS_DONE => 'TERMINE',
+                                default => strtoupper($status),
+                            };
+                        @endphp
+                        <article class="jira-column">
+                            <header class="jira-column-header">
+                                <h3
+                                    data-board-title="{{ $status }}"
+                                    data-kanban-label="{{ $boardStatusLabels[$status] ?? strtoupper($status) }}"
+                                    data-scrum-label="{{ $scrumLabel }}"
+                                >
+                                    {{ $boardStatusLabels[$status] ?? strtoupper($status) }}
+                                </h3>
+                                <span class="jira-count board-count" data-status-count="{{ $status }}">
+                                    {{ count($tasksByStatus[$status] ?? []) }}
+                                </span>
+                            </header>
+
+                            <div class="space-y-3 board-column jira-column-body" data-board-column="{{ $status }}">
+                                @forelse ($tasksByStatus[$status] ?? [] as $task)
+                                    @php
+                                        $assigneeName = $task->assignee?->name ?? 'Non assigne';
+                                        $assigneeInitial = strtoupper(substr($assigneeName, 0, 1));
+                                    @endphp
+                                    <article
+                                        class="board-card jira-task-card"
+                                        draggable="true"
+                                        data-task-id="{{ $task->id }}"
+                                        data-task-title="{{ $task->title }}"
+                                        data-task-key="SCRUM-{{ $task->id }}"
+                                        data-task-assignee="{{ $assigneeName }}"
+                                    >
+                                        <p class="jira-task-title">{{ $task->title }}</p>
+                                        <div class="jira-task-meta">
+                                            <span class="jira-task-date">{{ $task->due_date?->format('M d, Y') ?? 'Aucune date' }}</span>
+                                            <span>{{ $priorityLabels[$task->priority] ?? ucfirst((string) $task->priority) }}</span>
+                                        </div>
+                                        <div class="jira-task-meta">
+                                            <span class="jira-task-key">SCRUM-{{ $task->id }}</span>
+                                            <span class="jira-task-avatar" title="{{ $assigneeName }}">{{ $assigneeInitial }}</span>
+                                        </div>
+                                    </article>
+                                @empty
+                                    <p class="jira-empty-col">Aucune tache</p>
+                                @endforelse
+                            </div>
+                        </article>
+                    @endforeach
                 </div>
             </div>
         </section>
@@ -769,6 +710,11 @@
                         if (badge) {
                             badge.textContent = String(count);
                         }
+
+                        const inlineCount = document.querySelector(`[data-status-inline-count="${status}"]`);
+                        if (inlineCount) {
+                            inlineCount.textContent = String(count);
+                        }
                     });
 
                     const backlog = Number(statusCounts.todo ?? 0);
@@ -809,8 +755,6 @@
                     const assigneeInitial = this.escapeHtml((String(task.assignee ?? '?').trim().charAt(0) || '?').toUpperCase());
                     const priority = this.escapeHtml(task.priority_label ?? 'Non definie');
                     const dueDate = this.escapeHtml(task.due_date ?? 'Aucune');
-                    const subtasksTotal = Number(task.subtasks_total ?? 0);
-                    const subtasksDone = Number(task.subtasks_done ?? 0);
 
                     return `
                         <article
@@ -818,26 +762,47 @@
                             draggable="true"
                             data-task-id="${safeTaskId}"
                             data-task-title="${title}"
+                            data-task-key="SCRUM-${safeTaskId}"
+                            data-task-assignee="${assignee}"
                         >
                             <p class="jira-task-title">${title}</p>
-                            <p class="jira-task-date">${dueDate}</p>
-                            <p class="jira-task-key">SCRUM-${safeTaskId}</p>
                             <div class="jira-task-meta">
+                                <span class="jira-task-date">${dueDate}</span>
                                 <span>${priority}</span>
+                            </div>
+                            <div class="jira-task-meta">
+                                <span class="jira-task-key">SCRUM-${safeTaskId}</span>
                                 <span class="jira-task-avatar" title="${assignee}">${assigneeInitial}</span>
                             </div>
-                            <p class="jira-task-subtasks">Sous-taches: ${subtasksDone}/${subtasksTotal}</p>
                         </article>
                     `;
                 },
                 applyBoardFilter() {
                     const query = this.normalizeForSearch(this.boardQuery);
 
-                    document.querySelectorAll('.board-card').forEach((card) => {
-                        const title = this.normalizeForSearch(card.getAttribute('data-task-title') ?? '');
-                        const key = this.normalizeForSearch(card.querySelector('.jira-task-key')?.textContent ?? '');
-                        const visible = query === '' || title.includes(query) || key.includes(query);
-                        card.classList.toggle('hidden', !visible);
+                    document.querySelectorAll('.board-column').forEach((column) => {
+                        const cards = column.querySelectorAll('.board-card');
+                        let visibleCount = 0;
+
+                        cards.forEach((card) => {
+                            const title = this.normalizeForSearch(card.getAttribute('data-task-title') ?? '');
+                            const key = this.normalizeForSearch(card.getAttribute('data-task-key') ?? '');
+                            const assignee = this.normalizeForSearch(card.getAttribute('data-task-assignee') ?? '');
+                            const visible = query === '' || title.includes(query) || key.includes(query) || assignee.includes(query);
+                            card.classList.toggle('hidden', !visible);
+                            if (visible) {
+                                visibleCount += 1;
+                            }
+                        });
+
+                        const existingFilterEmpty = column.querySelector('.board-filter-empty');
+                        if (query !== '' && cards.length > 0 && visibleCount === 0) {
+                            if (!existingFilterEmpty) {
+                                column.insertAdjacentHTML('beforeend', '<p class="jira-empty-col board-filter-empty">Aucun resultat</p>');
+                            }
+                        } else if (existingFilterEmpty) {
+                            existingFilterEmpty.remove();
+                        }
                     });
                 },
                 normalizeForSearch(value) {

@@ -10,7 +10,7 @@
             <div>
                 <p class="fal-brand-kicker">Project Intelligence</p>
                 <h1 class="mt-1 text-2xl font-semibold client-heading-accent">{{ $report['project']['name'] }} - Rapport SaaS</h1>
-                <p class="mt-1 text-sm text-slate-500">Genere le {{ $report['generated_at'] }} • Data live synchronisee.</p>
+                <p class="mt-1 text-sm text-slate-500">Genere le {{ $report['generated_at'] }} | Data live synchronisee.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('client.projects.show', $project) }}" class="client-button-muted">Retour workspace</a>

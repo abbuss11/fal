@@ -1,8 +1,11 @@
 <x-app-layout>
     @php
         $pageProjects = $projects->getCollection();
+        $currentUser = auth()->user();
+        $canCreateProject = (bool) $currentUser?->hasPermission('projects.create');
+        $canUpdateProject = (bool) $currentUser?->hasPermission('projects.update');
 
-        $projectSnapshots = $pageProjects->map(static function ($project): array {
+        $projectSnapshots = $pageProjects->map(static function ($project) use ($currentUser, $canUpdateProject): array {
             $tasksTotal = (int) $project->tasks_count;
             $tasksDone = (int) $project->tasks_done_count;
             $progress = $tasksTotal > 0 ? (int) round(($tasksDone / $tasksTotal) * 100) : 0;
@@ -28,6 +31,9 @@
                 'updated_ts' => $project->updated_at?->timestamp ?? 0,
                 'workspace_url' => route('client.projects.show', $project),
                 'report_url' => route('client.projects.report', $project),
+                'edit_url' => $canUpdateProject && $currentUser?->canManageProject($project)
+                    ? route('client.projects.edit', $project)
+                    : null,
             ];
         })->values();
 
@@ -66,6 +72,9 @@
                 <p class="mt-1 text-sm text-slate-500">Refonte SaaS: pilotage, tri intelligent, vues operationnelles.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                @if ($canCreateProject)
+                    <a href="{{ route('client.projects.create') }}" class="client-button">Nouveau projet</a>
+                @endif
                 <a href="{{ route('client.tasks.index') }}" class="client-button-muted">Task Center</a>
                 <a href="{{ route('client.dashboard') }}" class="client-button-muted">Retour dashboard</a>
             </div>
@@ -76,103 +85,6 @@
         class="client-shell space-y-5"
         x-data="projectPortfolioHub(@js($projectSnapshots->all()), @js($portfolioStats))"
     >
-        <style>
-            .portfolio-command-shell {
-                border: 1px solid color-mix(in srgb, var(--client-accent) 20%, var(--client-line));
-                border-radius: 1rem;
-                background: linear-gradient(145deg, #ffffff 0%, #f3f9fd 100%);
-            }
-            .portfolio-field {
-                border: 1px solid var(--client-line);
-                border-radius: 0.75rem;
-                background: #fff;
-                color: #0f172a;
-                font-size: 0.875rem;
-                line-height: 1.25rem;
-                padding: 0.6rem 0.8rem;
-                width: 100%;
-            }
-            .portfolio-field:focus {
-                outline: none;
-                border-color: color-mix(in srgb, var(--client-accent) 45%, var(--client-line));
-                box-shadow: 0 0 0 3px rgba(15, 109, 147, 0.12);
-            }
-            .portfolio-toggle {
-                border: 1px solid var(--client-line);
-                border-radius: 0.7rem;
-                background: #fff;
-                color: #334155;
-                font-size: 0.8rem;
-                font-weight: 700;
-                padding: 0.45rem 0.75rem;
-                transition: all 180ms ease;
-            }
-            .portfolio-toggle:hover {
-                border-color: color-mix(in srgb, var(--client-accent) 36%, var(--client-line));
-                color: var(--client-accent);
-            }
-            .portfolio-toggle-active {
-                border-color: color-mix(in srgb, var(--client-accent) 50%, var(--client-line));
-                background: color-mix(in srgb, var(--client-accent) 12%, white);
-                color: var(--client-accent);
-            }
-            .portfolio-stage-card {
-                border: 1px solid color-mix(in srgb, var(--client-accent) 16%, var(--client-line));
-                border-radius: 1rem;
-                background: linear-gradient(150deg, #fff 0%, #f4f9fc 100%);
-                padding: 0.95rem;
-            }
-            .portfolio-stage-label {
-                font-size: 0.68rem;
-                font-weight: 700;
-                letter-spacing: 0.12em;
-                text-transform: uppercase;
-                color: #64748b;
-            }
-            .portfolio-stage-progress {
-                margin-top: 0.6rem;
-                height: 0.35rem;
-                border-radius: 999px;
-                background: #e2e8f0;
-                overflow: hidden;
-            }
-            .portfolio-stage-progress > span {
-                display: block;
-                height: 100%;
-                border-radius: 999px;
-            }
-            .portfolio-card {
-                border: 1px solid color-mix(in srgb, var(--client-accent) 14%, var(--client-line));
-                border-radius: 1.1rem;
-                padding: 1rem;
-                background: linear-gradient(160deg, #ffffff 0%, #f8fcff 68%, #edf7fc 100%);
-                box-shadow: 0 18px 38px -34px rgba(15, 23, 42, 0.45);
-            }
-            .portfolio-ring {
-                --progress: 0;
-                width: 4.8rem;
-                height: 4.8rem;
-                border-radius: 999px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                background:
-                    radial-gradient(circle at center, white 60%, transparent 61%),
-                    conic-gradient(var(--client-accent) calc(var(--progress) * 1%), #dbe7f1 0);
-            }
-            .portfolio-ring > span {
-                font-size: 0.73rem;
-                font-weight: 700;
-                color: #0f172a;
-            }
-            .portfolio-empty {
-                border: 1px dashed color-mix(in srgb, var(--client-accent) 35%, var(--client-line));
-                border-radius: 1rem;
-                padding: 1.25rem;
-                background: color-mix(in srgb, var(--client-accent) 4%, white);
-                text-align: center;
-            }
-        </style>
 
         <section class="fal-hero">
             <div class="fal-hero-content flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -333,7 +245,7 @@
                                     <div class="h-1.5 rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-accent-soft)]" :style="`width: ${project.progress}%;`"></div>
                                 </div>
                                 <p class="mt-2 text-xs text-slate-500">
-                                    <span x-text="project.tasks_open"></span> ouvertes • MAJ <span x-text="project.updated_human"></span>
+                                    <span x-text="project.tasks_open"></span> ouvertes | MAJ <span x-text="project.updated_human"></span>
                                 </p>
                             </div>
                         </div>
@@ -341,6 +253,7 @@
                         <div class="mt-4 flex items-center gap-2">
                             <a :href="project.workspace_url" class="client-button !px-3 !py-2">Workspace</a>
                             <a :href="project.report_url" class="client-button-muted !px-3 !py-2">Rapport</a>
+                            <a x-show="project.edit_url" :href="project.edit_url" class="client-button-muted !px-3 !py-2">Modifier</a>
                         </div>
                     </article>
                 </template>
@@ -365,7 +278,7 @@
                             <tr class="transition hover:bg-slate-50/70">
                                 <td class="px-4 py-3">
                                     <p class="text-sm font-semibold text-slate-900" x-text="project.name"></p>
-                                    <p class="mt-1 text-xs text-slate-500">Projet #<span x-text="project.id"></span> • MAJ <span x-text="project.updated_human"></span></p>
+                                    <p class="mt-1 text-xs text-slate-500">Projet #<span x-text="project.id"></span> | MAJ <span x-text="project.updated_human"></span></p>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-slate-600" x-text="project.owner"></td>
                                 <td class="px-4 py-3 text-sm text-slate-600">
@@ -392,6 +305,7 @@
                                     <div class="inline-flex items-center gap-3">
                                         <a :href="project.workspace_url" class="text-sm font-semibold text-[var(--client-accent)] hover:text-cyan-700">Workspace</a>
                                         <a :href="project.report_url" class="text-sm font-semibold text-cyan-700 hover:text-cyan-600">Rapport</a>
+                                        <a x-show="project.edit_url" :href="project.edit_url" class="text-sm font-semibold text-slate-700 hover:text-slate-900">Modifier</a>
                                     </div>
                                 </td>
                             </tr>

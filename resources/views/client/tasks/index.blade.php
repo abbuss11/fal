@@ -1,8 +1,10 @@
 <x-app-layout>
     @php
         $pageTasks = $tasks->getCollection();
+        $canCreateTask = $canCreateTask ?? false;
+        $canUpdateTask = $canUpdateTask ?? false;
 
-        $taskSnapshots = $pageTasks->map(static function ($task) use ($statuses): array {
+        $taskSnapshots = $pageTasks->map(static function ($task) use ($statuses, $canUpdateTask): array {
             $status = (string) $task->status;
             $statusLabel = (string) ($statuses[$status] ?? strtoupper($status));
             $statusTone = match ($status) {
@@ -32,6 +34,7 @@
                 'due_timestamp' => $task->due_date?->timestamp ?? 0,
                 'is_late' => $isLate,
                 'workspace_url' => $task->project_id ? route('client.projects.show', $task->project_id).'#board' : null,
+                'edit_url' => $canUpdateTask ? route('client.tasks.edit', $task) : null,
             ];
         })->values();
 
@@ -52,6 +55,9 @@
                 <p class="mt-1 text-sm text-slate-500">Vision SaaS complete de la file d'execution et des urgences.</p>
             </div>
             <div class="flex items-center gap-2">
+                @if ($canCreateTask)
+                    <a href="{{ route('client.tasks.create', ['project_id' => $selectedProjectId]) }}" class="client-button">Nouvelle tache</a>
+                @endif
                 <a href="{{ route('client.tasks.calendar') }}" class="client-button-muted">Calendrier</a>
                 <a href="{{ route('client.dashboard') }}" class="client-button-muted">Retour dashboard</a>
             </div>
@@ -158,7 +164,7 @@
                             <div>
                                 <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Task #<span x-text="task.id"></span></p>
                                 <h3 class="mt-1 text-base font-semibold text-slate-900" x-text="task.title"></h3>
-                                <p class="mt-1 text-xs text-slate-500"><span x-text="task.project"></span> • <span x-text="task.assignee"></span></p>
+                                <p class="mt-1 text-xs text-slate-500"><span x-text="task.project"></span> | <span x-text="task.assignee"></span></p>
                             </div>
                             <span
                                 class="fal-status-pill"
@@ -187,7 +193,10 @@
                                 :class="task.is_late ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700'"
                                 x-text="task.due_label"
                             ></span>
-                            <a x-show="task.workspace_url" :href="task.workspace_url" class="text-sm font-semibold text-[var(--client-accent)] hover:text-cyan-700">Workspace</a>
+                            <div class="flex items-center gap-3">
+                                <a x-show="task.workspace_url" :href="task.workspace_url" class="text-sm font-semibold text-[var(--client-accent)] hover:text-cyan-700">Workspace</a>
+                                <a x-show="task.edit_url" :href="task.edit_url" class="text-sm font-semibold text-slate-700 hover:text-slate-900">Modifier</a>
+                            </div>
                         </div>
                     </article>
                 </template>
@@ -242,7 +251,10 @@
                                     ></span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a x-show="task.workspace_url" :href="task.workspace_url" class="text-sm font-semibold text-[var(--client-accent)] hover:text-cyan-700">Workspace</a>
+                                    <div class="inline-flex items-center gap-3">
+                                        <a x-show="task.workspace_url" :href="task.workspace_url" class="text-sm font-semibold text-[var(--client-accent)] hover:text-cyan-700">Workspace</a>
+                                        <a x-show="task.edit_url" :href="task.edit_url" class="text-sm font-semibold text-slate-700 hover:text-slate-900">Modifier</a>
+                                    </div>
                                 </td>
                             </tr>
                         </template>

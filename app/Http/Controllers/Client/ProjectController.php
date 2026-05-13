@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Domain\Projects\Services\ProjectWorkspaceService;
 use App\Http\Controllers\Controller;
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskSubtask;
@@ -46,6 +47,48 @@ class ProjectController extends Controller
         return view('client.projects.index', [
             'projects' => $projects,
         ]);
+    }
+
+    public function create(Request $request): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->hasPermission('projects.create'), 403);
+
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('client.projects.create', [
+            'project' => new Project(),
+            'clients' => $clients,
+            'statusOptions' => Project::statusOptions(),
+            'priorityOptions' => Project::priorityOptions(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->hasPermission('projects.create'), 403);
+
+        $payload = $this->validatedProjectPayload($request);
+        $payload['owner_id'] = $user->id;
+
+        $project = Project::query()->create($payload);
+        $project->members()->syncWithoutDetaching([
+            $user->id => [
+                'role' => User::ROLE_PROJECT_MANAGER,
+                'is_active' => true,
+            ],
+        ]);
+
+        return redirect()
+            ->route('client.projects.show', $project)
+            ->with('status', 'Projet cree avec succes.');
     }
 
     public function show(Request $request, Project $project): View
@@ -127,6 +170,54 @@ class ProjectController extends Controller
             'snapshotVersion' => $this->workspaceService->snapshotVersion($project),
             'liveSnapshot' => $liveSnapshot,
         ]);
+    }
+
+    public function edit(Request $request, Project $project): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('client.projects.edit', [
+            'project' => $project,
+            'clients' => $clients,
+            'statusOptions' => Project::statusOptions(),
+            'priorityOptions' => Project::priorityOptions(),
+        ]);
+    }
+
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $project->update($this->validatedProjectPayload($request));
+
+        return redirect()
+            ->route('client.projects.show', $project)
+            ->with('status', 'Projet mis a jour.');
+    }
+
+    public function destroy(Request $request, Project $project): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canManageProject($project), 403);
+
+        $projectName = $project->name;
+        $project->delete();
+
+        return redirect()
+            ->route('client.projects.index')
+            ->with('status', "Projet \"{$projectName}\" supprime.");
     }
 
     public function moveTask(Request $request, Project $project, Task $task): JsonResponse
@@ -536,5 +627,45 @@ class ProjectController extends Controller
         }
 
         return $query;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function validatedProjectPayload(Request $request): array
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'objective' => ['nullable', 'string'],
+            'status' => ['required', Rule::in(array_keys(Project::statusOptions()))],
+            'priority' => ['required', Rule::in(array_keys(Project::priorityOptions()))],
+            'budget' => ['nullable', 'numeric', 'min:0'],
+            'start_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'is_template' => ['nullable', 'boolean'],
+            'template_name' => ['nullable', 'string', 'max:180'],
+        ]);
+
+        $isTemplate = (bool) ($validated['is_template'] ?? false);
+        $templateName = $validated['template_name'] ?? null;
+        if (! $isTemplate) {
+            $templateName = null;
+        }
+
+        return [
+            'name' => trim((string) $validated['name']),
+            'description' => $validated['description'] ?? null,
+            'objective' => $validated['objective'] ?? null,
+            'status' => (string) $validated['status'],
+            'priority' => (string) $validated['priority'],
+            'budget' => $validated['budget'] ?? null,
+            'start_date' => $validated['start_date'] ?? null,
+            'due_date' => $validated['due_date'] ?? null,
+            'client_id' => $validated['client_id'] ?? null,
+            'is_template' => $isTemplate,
+            'template_name' => $templateName ? trim((string) $templateName) : null,
+        ];
     }
 }

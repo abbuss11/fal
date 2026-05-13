@@ -38,8 +38,9 @@ class ProjectFileController extends Controller
         }
 
         $uploaded = $request->file('file');
+        $originalName = basename((string) $uploaded->getClientOriginalName());
         $baseName = $validated['logical_name']
-            ?? pathinfo((string) $uploaded->getClientOriginalName(), PATHINFO_FILENAME);
+            ?? pathinfo($originalName, PATHINFO_FILENAME);
         $logicalName = Str::of((string) $baseName)
             ->slug('_')
             ->value();
@@ -51,7 +52,7 @@ class ProjectFileController extends Controller
             ->max('version') + 1;
 
         $disk = (string) config('filesystems.project_files_disk', config('filesystems.default'));
-        $storedFilename = 'v'.$nextVersion.'_'.Str::random(10).'_'.$uploaded->getClientOriginalName();
+        $storedFilename = 'v'.$nextVersion.'_'.Str::random(10).'_'.$originalName;
         $storedPath = $uploaded->storeAs(
             'projects/'.$project->id.'/files/'.$logicalName,
             $storedFilename,
@@ -64,7 +65,7 @@ class ProjectFileController extends Controller
             'uploaded_by' => $user->id,
             'logical_name' => $logicalName,
             'version' => max(1, $nextVersion),
-            'original_name' => $uploaded->getClientOriginalName(),
+            'original_name' => $originalName,
             'stored_path' => (string) $storedPath,
             'mime_type' => $uploaded->getClientMimeType(),
             'size' => (int) $uploaded->getSize(),
@@ -105,5 +106,35 @@ class ProjectFileController extends Controller
 
         return Storage::disk($disk)->download($projectFile->stored_path, $projectFile->original_name);
     }
-}
 
+    public function destroy(Request $request, Project $project, ProjectFile $projectFile): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canAccessProject($project), 403);
+        abort_unless($user->hasPermission('files.create'), 403);
+        abort_unless($projectFile->project_id === $project->id, 404);
+
+        $canManage = $user->canManageProject($project);
+        $isUploader = (int) $projectFile->uploaded_by === (int) $user->id;
+        abort_unless($canManage || $isUploader, 403);
+
+        $disk = (string) config('filesystems.project_files_disk', config('filesystems.default'));
+        if (Storage::disk($disk)->exists($projectFile->stored_path)) {
+            Storage::disk($disk)->delete($projectFile->stored_path);
+        }
+
+        $fileId = (int) $projectFile->id;
+        $projectFile->delete();
+
+        WorkspaceBroadcaster::forProject($project, 'project_file_deleted', [
+            'file_id' => $fileId,
+        ]);
+        DashboardBroadcaster::forProject($project, [$user->id], 'project_file_deleted', [
+            'file_id' => $fileId,
+        ]);
+
+        return back()->with('status', 'Fichier supprime.');
+    }
+}

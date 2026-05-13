@@ -320,6 +320,46 @@ class TaskController extends Controller
         return back()->with('status', 'Commentaire ajoute.');
     }
 
+    public function updateComment(Request $request, Task $task, TaskComment $comment): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($task->project && $user->canAccessProject($task->project), 403);
+        abort_unless($comment->task_id === $task->id, 404);
+
+        $canManage = $task->project && $user->canManageProject($task->project);
+        $isAuthor = (int) $comment->user_id === (int) $user->id;
+        abort_unless($canManage || $isAuthor, 403);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:3000'],
+        ]);
+
+        $comment->update([
+            'body' => $validated['body'],
+        ]);
+
+        return back()->with('status', 'Commentaire mis a jour.');
+    }
+
+    public function destroyComment(Request $request, Task $task, TaskComment $comment): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($task->project && $user->canAccessProject($task->project), 403);
+        abort_unless($comment->task_id === $task->id, 404);
+
+        $canManage = $task->project && $user->canManageProject($task->project);
+        $isAuthor = (int) $comment->user_id === (int) $user->id;
+        abort_unless($canManage || $isAuthor, 403);
+
+        $comment->delete();
+
+        return back()->with('status', 'Commentaire supprime.');
+    }
+
     /**
      * @return array<string, mixed>
      */

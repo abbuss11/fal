@@ -53,9 +53,18 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::post('/projects/{project}/messages', [ClientProjectMessageController::class, 'store'])
         ->middleware('permission:messages.create')
         ->name('projects.messages.store');
+    Route::patch('/projects/{project}/messages/{projectMessage}', [ClientProjectMessageController::class, 'update'])
+        ->middleware('permission:messages.create')
+        ->name('projects.messages.update');
+    Route::delete('/projects/{project}/messages/{projectMessage}', [ClientProjectMessageController::class, 'destroy'])
+        ->middleware('permission:messages.create')
+        ->name('projects.messages.destroy');
     Route::post('/projects/{project}/files', [ClientProjectFileController::class, 'store'])
         ->middleware('permission:files.create')
         ->name('projects.files.store');
+    Route::delete('/projects/{project}/files/{projectFile}', [ClientProjectFileController::class, 'destroy'])
+        ->middleware('permission:files.create')
+        ->name('projects.files.destroy');
     Route::get('/projects/{project}/files/{projectFile}/download', [ClientProjectFileController::class, 'download'])
         ->middleware('permission:files.read')
         ->name('projects.files.download');
@@ -100,6 +109,12 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::post('/tasks/{task}/comments', [ClientTaskController::class, 'storeComment'])
         ->middleware('permission:comments.create')
         ->name('tasks.comments.store');
+    Route::patch('/tasks/{task}/comments/{comment}', [ClientTaskController::class, 'updateComment'])
+        ->middleware('permission:comments.create')
+        ->name('tasks.comments.update');
+    Route::delete('/tasks/{task}/comments/{comment}', [ClientTaskController::class, 'destroyComment'])
+        ->middleware('permission:comments.create')
+        ->name('tasks.comments.destroy');
     Route::post('/tasks/{task}/subtasks', [ClientSubtaskController::class, 'store'])
         ->middleware('permission:tasks.subtasks.manage')
         ->name('tasks.subtasks.store');

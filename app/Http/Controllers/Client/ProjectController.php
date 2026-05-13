@@ -167,6 +167,12 @@ class ProjectController extends Controller
             'recentMessages' => $recentMessages,
             'projectFiles' => $projectFiles,
             'canManageProject' => $user->canManageProject($project),
+            'currentUserId' => $user->id,
+            'canUpdateTask' => $user->hasPermission('tasks.update'),
+            'canDeleteTask' => $user->hasPermission('tasks.delete'),
+            'canCreateComment' => $user->hasPermission('comments.create'),
+            'canCreateMessage' => $user->hasPermission('messages.create'),
+            'canManageFiles' => $user->hasPermission('files.create'),
             'snapshotVersion' => $this->workspaceService->snapshotVersion($project),
             'liveSnapshot' => $liveSnapshot,
         ]);

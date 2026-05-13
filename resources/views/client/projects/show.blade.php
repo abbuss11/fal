@@ -58,6 +58,16 @@
             projectId: @js($project->id),
             snapshotUrl: @js(route('client.projects.snapshot', $project)),
             moveTaskUrlPrefix: @js(url('/client/projects/'.$project->id.'/tasks')),
+            taskUrlPrefix: @js(url('/client/tasks')),
+            messageUrlPrefix: @js(url('/client/projects/'.$project->id.'/messages')),
+            fileUrlPrefix: @js(url('/client/projects/'.$project->id.'/files')),
+            currentUserId: @js($currentUserId),
+            canManageProject: @js($canManageProject),
+            canUpdateTask: @js($canUpdateTask),
+            canDeleteTask: @js($canDeleteTask),
+            canCreateComment: @js($canCreateComment),
+            canCreateMessage: @js($canCreateMessage),
+            canManageFiles: @js($canManageFiles),
             csrfToken: @js(csrf_token()),
             snapshotVersion: @js($snapshotVersion),
             initialSnapshot: @js($liveSnapshot),
@@ -67,6 +77,17 @@
         @if (session('status'))
             <div class="client-panel border-l-4 border-l-emerald-500 p-4 text-sm text-emerald-700">
                 {{ session('status') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="client-panel border-l-4 border-l-rose-500 p-4 text-sm text-rose-700">
+                <p class="font-semibold">Certaines actions ont echoue:</p>
+                <ul class="mt-2 list-disc space-y-1 pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -296,6 +317,20 @@
                                             <span class="jira-task-key">SCRUM-{{ $task->id }}</span>
                                             <span class="jira-task-avatar" title="{{ $assigneeName }}">{{ $assigneeInitial }}</span>
                                         </div>
+                                        @if ($canUpdateTask || $canDeleteTask)
+                                            <div class="jira-task-meta">
+                                                @if ($canUpdateTask)
+                                                    <a href="{{ route('client.tasks.edit', $task) }}" class="text-[11px] font-semibold text-[var(--client-accent)] hover:text-cyan-700">Modifier</a>
+                                                @endif
+                                                @if ($canDeleteTask)
+                                                    <form method="POST" action="{{ route('client.tasks.destroy', $task) }}" onsubmit="return confirm('Supprimer cette tache ?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">Supprimer</button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </article>
                                 @empty
                                     <p class="jira-empty-col">Aucune tache</p>
@@ -422,30 +457,36 @@
                 @php
                     $firstTaskForComment = $tasks->first();
                 @endphp
-                <form
-                    method="POST"
-                    action="{{ $firstTaskForComment ? route('client.tasks.comments.store', $firstTaskForComment) : '#' }}"
-                    id="comment-form"
-                    class="mt-4 space-y-3"
-                >
-                    @csrf
-                    <div>
-                        <label for="comment-task-id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tache</label>
-                        <select id="comment-task-id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)>
-                            <option value="">Selectionner une tache</option>
-                            @foreach ($tasks as $taskOption)
-                                <option value="{{ $taskOption->id }}" data-action="{{ route('client.tasks.comments.store', $taskOption) }}">
-                                    {{ $taskOption->title }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="comment-body" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Commentaire</label>
-                        <textarea id="comment-body" name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)></textarea>
-                    </div>
-                    <button type="submit" class="client-button" @disabled(! $firstTaskForComment)>Publier un avis</button>
-                </form>
+                @if ($canCreateComment)
+                    <form
+                        method="POST"
+                        action="{{ $firstTaskForComment ? route('client.tasks.comments.store', $firstTaskForComment) : '#' }}"
+                        id="comment-form"
+                        class="mt-4 space-y-3"
+                    >
+                        @csrf
+                        <div>
+                            <label for="comment-task-id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tache</label>
+                            <select id="comment-task-id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)>
+                                <option value="">Selectionner une tache</option>
+                                @foreach ($tasks as $taskOption)
+                                    <option value="{{ $taskOption->id }}" data-action="{{ route('client.tasks.comments.store', $taskOption) }}">
+                                        {{ $taskOption->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="comment-body" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Commentaire</label>
+                            <textarea id="comment-body" name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)></textarea>
+                        </div>
+                        <button type="submit" class="client-button" @disabled(! $firstTaskForComment)>Publier un avis</button>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule aux commentaires.
+                    </p>
+                @endif
 
                 <div class="mt-6 space-y-3">
                     <div id="comments-list">
@@ -456,6 +497,27 @@
                                 <span class="text-xs text-slate-500">{{ $comment->created_at?->format('d/m/Y H:i') }}</span>
                             </div>
                             <p class="mt-2 text-sm text-slate-600">{{ $comment->body }}</p>
+                            @php
+                                $canManageComment = $canCreateComment && ($canManageProject || (int) $comment->user_id === (int) $currentUserId);
+                            @endphp
+                            @if ($canManageComment)
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="{{ route('client.tasks.comments.update', [$comment->task_id, $comment]) }}" class="space-y-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>{{ $comment->body }}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('client.tasks.comments.destroy', [$comment->task_id, $comment]) }}" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            @endif
                         </div>
                     @empty
                         <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucun commentaire.</p>
@@ -508,11 +570,17 @@
                 <h3 class="text-lg font-semibold text-slate-900">Chat interne</h3>
                 <p class="mt-1 text-xs text-slate-500">Mentions supportees: utilisez <code>@prenomnom</code> ou <code>@email</code>.</p>
 
-                <form method="POST" action="{{ route('client.projects.messages.store', $project) }}" class="mt-4 space-y-3">
-                    @csrf
-                    <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="Ecrire un message a l'equipe..." required></textarea>
-                    <button type="submit" class="client-button">Envoyer</button>
-                </form>
+                @if ($canCreateMessage)
+                    <form method="POST" action="{{ route('client.projects.messages.store', $project) }}" class="mt-4 space-y-3">
+                        @csrf
+                        <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="Ecrire un message a l'equipe..." required></textarea>
+                        <button type="submit" class="client-button">Envoyer</button>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule au chat interne.
+                    </p>
+                @endif
 
                 <div id="messages-list" class="mt-5 space-y-3">
                     @forelse ($recentMessages as $message)
@@ -522,6 +590,27 @@
                                 <span class="text-xs text-slate-500">{{ $message->created_at?->format('d/m/Y H:i') }}</span>
                             </div>
                             <p class="mt-2 text-sm text-slate-600">{{ $message->body }}</p>
+                            @php
+                                $canManageMessage = $canCreateMessage && ($canManageProject || (int) $message->user_id === (int) $currentUserId);
+                            @endphp
+                            @if ($canManageMessage)
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="{{ route('client.projects.messages.update', [$project, $message]) }}" class="space-y-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>{{ $message->body }}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('client.projects.messages.destroy', [$project, $message]) }}" onsubmit="return confirm('Supprimer ce message ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            @endif
                         </div>
                     @empty
                         <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucun message interne.</p>
@@ -535,31 +624,52 @@
                 <h3 class="text-lg font-semibold text-slate-900">Partage de fichiers</h3>
                 <p class="mt-1 text-xs text-slate-500">Versioning automatique actif: chaque upload du meme fichier incremente sa version.</p>
 
-                <form method="POST" action="{{ route('client.projects.files.store', $project) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-3">
-                    @csrf
-                    <div class="md:col-span-2">
-                        <label for="file-upload" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Fichier</label>
-                        <input id="file-upload" type="file" name="file" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>
-                    </div>
-                    <div>
-                        <label for="logical_name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nom logique</label>
-                        <input id="logical_name" name="logical_name" type="text" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="spec_api">
-                    </div>
-                    <div>
-                        <label for="file_task_id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">ID tache (optionnel)</label>
-                        <input id="file_task_id" type="number" name="task_id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm">
-                    </div>
-                    <div class="md:col-span-3">
-                        <button type="submit" class="client-button">Uploader</button>
-                    </div>
-                </form>
+                @if ($canManageFiles)
+                    <form method="POST" action="{{ route('client.projects.files.store', $project) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-3">
+                        @csrf
+                        <div class="md:col-span-2">
+                            <label for="file-upload" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Fichier</label>
+                            <input id="file-upload" type="file" name="file" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>
+                            <p class="mt-1 text-xs text-slate-500">Taille max: 20 MB. Le nom original est conserve.</p>
+                        </div>
+                        <div>
+                            <label for="logical_name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nom logique</label>
+                            <input id="logical_name" name="logical_name" type="text" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="spec_api">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="file_task_id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Lier a une tache (optionnel)</label>
+                            <select id="file_task_id" name="task_id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm">
+                                <option value="">Aucune</option>
+                                @foreach ($tasks as $taskOption)
+                                    <option value="{{ $taskOption->id }}">{{ $taskOption->title }} (#{{ $taskOption->id }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <button type="submit" class="client-button">Uploader</button>
+                        </div>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule aux fichiers.
+                    </p>
+                @endif
 
                 <div id="files-list" class="mt-5 space-y-3">
                     @forelse ($projectFiles as $file)
                         <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <p class="text-sm font-semibold text-slate-900">{{ $file->original_name }} (v{{ $file->version }})</p>
-                                <a href="{{ route('client.projects.files.download', [$project, $file]) }}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('client.projects.files.download', [$project, $file]) }}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                    @if ($canManageFiles && ($canManageProject || (int) $file->uploaded_by === (int) $currentUserId))
+                                        <form method="POST" action="{{ route('client.projects.files.destroy', [$project, $file]) }}" onsubmit="return confirm('Supprimer ce fichier ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
                             <p class="mt-1 text-xs text-slate-500">
                                 Par {{ $file->uploader?->name ?? 'Systeme' }} | {{ number_format(($file->size ?? 0) / 1024, 1) }} KB | {{ $file->created_at?->format('d/m/Y H:i') }}
@@ -755,6 +865,23 @@
                     const assigneeInitial = this.escapeHtml((String(task.assignee ?? '?').trim().charAt(0) || '?').toUpperCase());
                     const priority = this.escapeHtml(task.priority_label ?? 'Non definie');
                     const dueDate = this.escapeHtml(task.due_date ?? 'Aucune');
+                    const editUrl = `${config.taskUrlPrefix}/${safeTaskId}/edit`;
+                    const destroyUrl = `${config.taskUrlPrefix}/${safeTaskId}`;
+                    const actions = [];
+
+                    if (config.canUpdateTask) {
+                        actions.push(`<a href="${this.escapeHtml(editUrl)}" class="text-[11px] font-semibold text-[var(--client-accent)] hover:text-cyan-700">Modifier</a>`);
+                    }
+
+                    if (config.canDeleteTask) {
+                        actions.push(`
+                            <form method="POST" action="${this.escapeHtml(destroyUrl)}" onsubmit="return confirm('Supprimer cette tache ?');">
+                                <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">Supprimer</button>
+                            </form>
+                        `);
+                    }
 
                     return `
                         <article
@@ -774,6 +901,7 @@
                                 <span class="jira-task-key">SCRUM-${safeTaskId}</span>
                                 <span class="jira-task-avatar" title="${assignee}">${assigneeInitial}</span>
                             </div>
+                            ${actions.length > 0 ? `<div class="jira-task-meta">${actions.join('')}</div>` : ''}
                         </article>
                     `;
                 },
@@ -858,10 +986,35 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const commentId = Number(item.id ?? 0);
+                        const taskId = Number(item.task_id ?? 0);
+                        const userId = Number(item.user_id ?? 0);
                         const author = this.escapeHtml(item.author ?? 'Systeme');
                         const task = this.escapeHtml(item.task ?? 'Tache');
                         const body = this.escapeHtml(item.body ?? '');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
+                        const canManageComment = Boolean(config.canCreateComment) && (Boolean(config.canManageProject) || (Number(config.currentUserId ?? 0) === userId));
+                        const commentActionUrl = `${config.taskUrlPrefix}/${taskId}/comments/${commentId}`;
+                        const actions = canManageComment && commentId > 0 && taskId > 0
+                            ? `
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="${this.escapeHtml(commentActionUrl)}" class="space-y-2">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="PATCH">
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>${body}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="${this.escapeHtml(commentActionUrl)}" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
@@ -870,6 +1023,7 @@
                                     <span class="text-xs text-slate-500">${createdAt}</span>
                                 </div>
                                 <p class="mt-2 text-sm text-slate-600">${body}</p>
+                                ${actions}
                             </div>
                         `;
                     }).join('');
@@ -887,9 +1041,33 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const messageId = Number(item.id ?? 0);
+                        const userId = Number(item.user_id ?? 0);
                         const author = this.escapeHtml(item.author ?? 'Systeme');
                         const body = this.escapeHtml(item.body ?? '');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
+                        const canManageMessage = Boolean(config.canCreateMessage) && (Boolean(config.canManageProject) || (Number(config.currentUserId ?? 0) === userId));
+                        const messageActionUrl = `${config.messageUrlPrefix}/${messageId}`;
+                        const actions = canManageMessage && messageId > 0
+                            ? `
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="${this.escapeHtml(messageActionUrl)}" class="space-y-2">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="PATCH">
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>${body}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="${this.escapeHtml(messageActionUrl)}" onsubmit="return confirm('Supprimer ce message ?');">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
@@ -898,6 +1076,7 @@
                                     <span class="text-xs text-slate-500">${createdAt}</span>
                                 </div>
                                 <p class="mt-2 text-sm text-slate-600">${body}</p>
+                                ${actions}
                             </div>
                         `;
                     }).join('');
@@ -915,18 +1094,34 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const fileId = Number(item.id ?? 0);
+                        const uploaderId = Number(item.uploaded_by ?? 0);
                         const name = this.escapeHtml(item.name ?? '');
                         const version = Number(item.version ?? 1);
                         const uploader = this.escapeHtml(item.uploader ?? 'Systeme');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
                         const sizeKb = (Number(item.size ?? 0) / 1024).toFixed(1);
                         const task = item.task ? `<p class="mt-1 text-xs text-slate-500">Lie a la tache: ${this.escapeHtml(item.task)}</p>` : '';
+                        const canDeleteFile = Boolean(config.canManageFiles) && (Boolean(config.canManageProject) || Number(config.currentUserId ?? 0) === uploaderId);
+                        const fileActionUrl = `${config.fileUrlPrefix}/${fileId}`;
+                        const deleteAction = canDeleteFile && fileId > 0
+                            ? `
+                                <form method="POST" action="${this.escapeHtml(fileActionUrl)}" onsubmit="return confirm('Supprimer ce fichier ?');">
+                                    <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                </form>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <p class="text-sm font-semibold text-slate-900">${name} (v${version})</p>
-                                    <a href="${this.escapeHtml(item.download_url ?? '#')}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="${this.escapeHtml(item.download_url ?? '#')}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                        ${deleteAction}
+                                    </div>
                                 </div>
                                 <p class="mt-1 text-xs text-slate-500">Par ${uploader} | ${sizeKb} KB | ${createdAt}</p>
                                 ${task}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectMessage;
 use App\Models\User;
 use App\Notifications\ProjectMessagePostedNotification;
 use App\Notifications\UserMentionedNotification;
@@ -73,5 +74,78 @@ class ProjectMessageController extends Controller
 
         return back()->with('status', 'Message interne envoye.');
     }
-}
 
+    public function update(Request $request, Project $project, ProjectMessage $projectMessage): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canAccessProject($project), 403);
+        abort_unless($user->hasPermission('messages.create'), 403);
+        abort_unless((int) $projectMessage->project_id === (int) $project->id, 404);
+
+        $canManage = $user->canManageProject($project);
+        $isAuthor = (int) $projectMessage->user_id === (int) $user->id;
+        abort_unless($canManage || $isAuthor, 403);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:4000'],
+        ]);
+
+        $mentionedUsers = $this->mentionResolver->resolveUsers(
+            text: $validated['body'],
+            project: $project,
+            authorId: $user->id,
+        );
+
+        $projectMessage->update([
+            'body' => $validated['body'],
+            'mentions' => $mentionedUsers->pluck('id')->values()->all(),
+        ]);
+
+        $excerpt = Str::limit($validated['body'], 180);
+        foreach ($mentionedUsers as $mentionedUser) {
+            $mentionedUser->notify(new UserMentionedNotification(
+                project: $project,
+                contextLabel: 'le chat interne du projet',
+                excerpt: $excerpt,
+                mentionedBy: $user,
+            ));
+        }
+
+        WorkspaceBroadcaster::forProject($project, 'project_message_updated', [
+            'message_id' => $projectMessage->id,
+        ]);
+        DashboardBroadcaster::forProject($project, [$user->id], 'project_message_updated', [
+            'message_id' => $projectMessage->id,
+        ]);
+
+        return back()->with('status', 'Message mis a jour.');
+    }
+
+    public function destroy(Request $request, Project $project, ProjectMessage $projectMessage): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->canAccessProject($project), 403);
+        abort_unless($user->hasPermission('messages.create'), 403);
+        abort_unless((int) $projectMessage->project_id === (int) $project->id, 404);
+
+        $canManage = $user->canManageProject($project);
+        $isAuthor = (int) $projectMessage->user_id === (int) $user->id;
+        abort_unless($canManage || $isAuthor, 403);
+
+        $messageId = (int) $projectMessage->id;
+        $projectMessage->delete();
+
+        WorkspaceBroadcaster::forProject($project, 'project_message_deleted', [
+            'message_id' => $messageId,
+        ]);
+        DashboardBroadcaster::forProject($project, [$user->id], 'project_message_deleted', [
+            'message_id' => $messageId,
+        ]);
+
+        return back()->with('status', 'Message supprime.');
+    }
+}

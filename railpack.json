@@ -1,7 +1,7 @@
 {
+  "$schema": "https://schema.railpack.com",
   "packages": {
-    "php": "8.3",
-    "php-intl": "",
-    "php-zip": ""
-  }
+    "php": "8.3"
+  },
+  "phpExtensions": ["intl", "zip"]
 }

@@ -1,0 +1,78 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1080" viewBox="0 0 1800 1080">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#334e68"/>
+    </marker>
+    <style>
+      .title{font:700 34px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .subtitle{font:600 20px 'Segoe UI',Arial,sans-serif;fill:#334e68}
+      .laneTitle{font:700 18px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .task{fill:#fff;stroke:#7b8794;stroke-width:2}
+      .taskHead{font:700 15px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .taskTxt{font:500 13px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .meta{font:600 13px 'Segoe UI',Arial,sans-serif;fill:#1f3c88}
+      .legend{font:500 14px 'Segoe UI',Arial,sans-serif;fill:#486581}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1800" height="1080" fill="#f4f8fb"/>
+  <rect x="24" y="20" width="1752" height="1038" rx="18" fill="#fff" stroke="#bcccdc" stroke-width="2"/>
+
+  <text x="64" y="84" class="title">MOT - Modèle Organisationnel des Traitements</text>
+  <text x="64" y="118" class="subtitle">Qui ? Où ? Quand ? Comment ? (MA/AU, TR/TD)</text>
+
+  <rect x="64" y="160" width="1670" height="146" rx="10" fill="#e6fffa" stroke="#81e6d9"/>
+  <text x="86" y="198" class="laneTitle">Procédure : Gérer un projet collaboratif</text>
+  <text x="86" y="228" class="legend">Déclencheur externe : besoin client validé</text>
+  <text x="86" y="256" class="legend">Sortie attendue : projet livré + rapport + archivage</text>
+
+  <rect x="64" y="328" width="220" height="600" rx="10" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="82" y="368" class="laneTitle">Postes</text>
+  <text x="82" y="430" class="taskTxt">Direction / PO</text>
+  <text x="82" y="550" class="taskTxt">Chef de projet</text>
+  <text x="82" y="670" class="taskTxt">Membre équipe</text>
+  <text x="82" y="790" class="taskTxt">Système (auto)</text>
+
+  <line x1="286" y1="400" x2="1734" y2="400" stroke="#bcccdc" stroke-width="2"/>
+  <line x1="286" y1="520" x2="1734" y2="520" stroke="#bcccdc" stroke-width="2"/>
+  <line x1="286" y1="640" x2="1734" y2="640" stroke="#bcccdc" stroke-width="2"/>
+  <line x1="286" y1="760" x2="1734" y2="760" stroke="#bcccdc" stroke-width="2"/>
+
+  <rect x="286" y="328" width="1448" height="600" rx="10" fill="#ffffff" stroke="#bcccdc"/>
+
+  <rect x="320" y="418" width="250" height="84" rx="8" class="task"/>
+  <text x="334" y="446" class="taskHead">PH1 - Cadrage besoin</text>
+  <text x="334" y="468" class="meta">MA / TR</text>
+  <text x="334" y="490" class="taskTxt">Validation périmètre</text>
+
+  <rect x="620" y="538" width="290" height="92" rx="8" class="task"/>
+  <text x="636" y="568" class="taskHead">PH2 - Planification</text>
+  <text x="636" y="590" class="meta">MA / TR</text>
+  <text x="636" y="612" class="taskTxt">Créer projet + tâches</text>
+
+  <rect x="960" y="658" width="300" height="92" rx="8" class="task"/>
+  <text x="976" y="688" class="taskHead">PH3 - Exécution</text>
+  <text x="976" y="710" class="meta">MA / TR</text>
+  <text x="976" y="732" class="taskTxt">Réaliser tâche, commenter</text>
+
+  <rect x="1310" y="778" width="360" height="92" rx="8" class="task"/>
+  <text x="1326" y="808" class="taskHead">PH4 - Consolidation &amp; Alertes</text>
+  <text x="1326" y="830" class="meta">AU / TR + TD</text>
+  <text x="1326" y="852" class="taskTxt">Dashboard, notifications, relances</text>
+
+  <rect x="1370" y="538" width="300" height="92" rx="8" class="task"/>
+  <text x="1386" y="568" class="taskHead">PH5 - Clôture</text>
+  <text x="1386" y="590" class="meta">MA + AU / TD</text>
+  <text x="1386" y="612" class="taskTxt">Validation, rapport, archivage</text>
+
+  <line x1="570" y1="460" x2="620" y2="580" stroke="#334e68" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <line x1="910" y1="584" x2="960" y2="704" stroke="#334e68" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <line x1="1260" y1="704" x2="1310" y2="824" stroke="#334e68" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <line x1="1490" y1="778" x2="1490" y2="630" stroke="#334e68" stroke-width="2.3" marker-end="url(#arrow)"/>
+  <line x1="1370" y1="584" x2="1260" y2="704" stroke="#334e68" stroke-width="2.3" marker-end="url(#arrow)"/>
+
+  <rect x="64" y="948" width="1670" height="98" rx="10" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="86" y="986" class="legend">MA : Manuel, AU : Automatique, TR : Temps réel, TD : Traitement différé (batch).</text>
+  <text x="86" y="1014" class="legend">Le MOT affecte chaque phase à un poste de travail et précise le mode d'exécution.</text>
+</svg>
+

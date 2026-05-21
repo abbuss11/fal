@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectFile;
 use App\Models\User;
 use App\Notifications\ProjectFileSharedNotification;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProjectFileController extends Controller
 {
+    use SendsNotificationsSafely;
+
     public function store(Request $request, Project $project): RedirectResponse
     {
         /** @var User $user */
@@ -80,7 +83,11 @@ class ProjectFileController extends Controller
             ->values();
 
         foreach ($recipients as $recipient) {
-            $recipient->notify(new ProjectFileSharedNotification($project, $file, $user));
+            $this->notifySafely($recipient, new ProjectFileSharedNotification($project, $file, $user), [
+                'context' => 'project_file_shared',
+                'project_id' => $project->id,
+                'file_id' => $file->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_file_shared', [

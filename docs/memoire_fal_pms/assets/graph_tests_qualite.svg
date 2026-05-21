@@ -1,0 +1,40 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <defs>
+    <style>
+      .title{font:700 34px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .subtitle{font:600 18px 'Segoe UI',Arial,sans-serif;fill:#334e68}
+      .kpi{font:700 30px 'Segoe UI',Arial,sans-serif;fill:#1f3c88}
+      .lbl{font:500 16px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .legend{font:500 14px 'Segoe UI',Arial,sans-serif;fill:#486581}
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="#f6f9fc"/>
+  <rect x="30" y="24" width="1140" height="652" rx="16" fill="#fff" stroke="#d9e2ec" stroke-width="2"/>
+
+  <text x="64" y="84" class="title">Résultats des tests automatisés</text>
+  <text x="64" y="116" class="subtitle">Exécution locale du 15 mai 2026</text>
+
+  <circle cx="320" cy="340" r="170" fill="#ebf8ff" stroke="#2b6cb0" stroke-width="20"/>
+  <circle cx="320" cy="340" r="150" fill="#fff"/>
+  <text x="242" y="332" class="kpi">100%</text>
+  <text x="238" y="366" class="lbl">tests passés</text>
+
+  <rect x="560" y="200" width="520" height="110" rx="10" fill="#e6fffa" stroke="#2f855a"/>
+  <text x="590" y="246" class="kpi">44</text>
+  <text x="670" y="246" class="lbl">tests passés</text>
+  <text x="590" y="278" class="lbl">Aucun échec détecté</text>
+
+  <rect x="560" y="336" width="520" height="110" rx="10" fill="#ebf8ff" stroke="#2b6cb0"/>
+  <text x="590" y="382" class="kpi">140</text>
+  <text x="680" y="382" class="lbl">assertions validées</text>
+  <text x="590" y="414" class="lbl">Durée totale: 117.12 s</text>
+
+  <rect x="560" y="472" width="520" height="110" rx="10" fill="#fff7e6" stroke="#d69e2e"/>
+  <text x="590" y="518" class="kpi">13</text>
+  <text x="670" y="518" class="lbl">fichiers de tests</text>
+  <text x="590" y="550" class="lbl">Feature: 12, Unit: 1</text>
+
+  <rect x="64" y="612" width="1072" height="48" rx="10" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="84" y="642" class="legend">Commande exécutée: `php artisan test` (suite complète validée sur l'environnement local).</text>
+</svg>

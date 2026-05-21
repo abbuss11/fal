@@ -22,6 +22,8 @@
             initialStats: @js($stats),
             initialProjects: @js($projectsPreview),
             initialTasks: @js($tasksPreview),
+            initialUsers: @js($usersPreview ?? []),
+            initialTeams: @js($teamsPreview ?? []),
             initialStatusBreakdown: @js($statusBreakdown ?? []),
             initialVelocity: @js($velocity ?? []),
             initialProjectLoad: @js($projectLoad ?? []),
@@ -209,6 +211,12 @@
                     <a href="{{ route('client.tasks.index') }}" class="studio-nav-item">Taches</a>
                     <a href="{{ route('client.tasks.calendar') }}" class="studio-nav-item">Calendrier</a>
                     <a href="{{ route('client.timesheets.index') }}" class="studio-nav-item">Timesheets</a>
+                    @if (auth()->user()->hasPermission('users.read'))
+                        <a href="{{ route('client.users.index') }}" class="studio-nav-item">Users</a>
+                    @endif
+                    @if (auth()->user()->hasPermission('teams.read'))
+                        <a href="{{ route('client.teams.index') }}" class="studio-nav-item">Equipes</a>
+                    @endif
                     <a href="{{ route('profile.edit') }}" class="studio-nav-item">Profil</a>
                 </nav>
 
@@ -250,11 +258,31 @@
                         <p class="studio-kpi-help">Intervention prioritaire</p>
                     </article>
                     <article class="studio-kpi-card neo-animate" style="animation-delay: 190ms;">
+                        <p class="studio-kpi-label">Echeances 7 jours</p>
+                        <p class="studio-kpi-value" data-live-stat="tasks_due_week">{{ $stats['tasks_due_week'] ?? 0 }}</p>
+                        <p class="studio-kpi-help">Charge imminente</p>
+                    </article>
+                    <article class="studio-kpi-card neo-animate" style="animation-delay: 230ms;">
                         <p class="studio-kpi-label">Mes taches ouvertes</p>
                         <p class="studio-kpi-value" data-live-stat="my_open_tasks">{{ $stats['my_open_tasks'] }}</p>
                         <p class="studio-kpi-help">Focus quotidien</p>
                     </article>
-                    <article class="studio-kpi-card neo-animate sm:col-span-2 xl:col-span-1" style="animation-delay: 240ms;">
+                    <article class="studio-kpi-card neo-animate" style="animation-delay: 270ms;">
+                        <p class="studio-kpi-label">Equipes</p>
+                        <p class="studio-kpi-value" data-live-stat="teams_total">{{ $stats['teams_total'] ?? 0 }}</p>
+                        <p class="studio-kpi-help" data-live-teams-active>{{ $stats['teams_active'] ?? 0 }} actives</p>
+                    </article>
+                    <article class="studio-kpi-card neo-animate" style="animation-delay: 310ms;">
+                        <p class="studio-kpi-label">Utilisateurs</p>
+                        <p class="studio-kpi-value" data-live-stat="users_total">{{ $stats['users_total'] ?? 0 }}</p>
+                        <p class="studio-kpi-help" data-live-users-active>{{ $stats['users_active'] ?? 0 }} actifs</p>
+                    </article>
+                    <article class="studio-kpi-card neo-animate" style="animation-delay: 350ms;">
+                        <p class="studio-kpi-label">Heures semaine</p>
+                        <p class="studio-kpi-value" data-live-stat="timesheet_hours_week">{{ $stats['timesheet_hours_week'] ?? 0 }}</p>
+                        <p class="studio-kpi-help">Timesheets consolidees</p>
+                    </article>
+                    <article class="studio-kpi-card neo-animate sm:col-span-2 xl:col-span-2" style="animation-delay: 390ms;">
                         <p class="studio-kpi-label">Notifications</p>
                         <p class="studio-kpi-value" data-live-stat="notifications_unread">{{ $stats['notifications_unread'] }}</p>
                         <p class="studio-kpi-help">Non lues</p>
@@ -387,6 +415,53 @@
                         @endforelse
                     </div>
                 </section>
+
+                @if (auth()->user()->hasPermission('teams.read') || auth()->user()->hasPermission('users.read'))
+                    <section class="grid gap-5 xl:grid-cols-2">
+                        @if (auth()->user()->hasPermission('teams.read'))
+                            <article class="studio-panel neo-animate" style="animation-delay: 250ms;">
+                                <div class="mb-4 flex items-center justify-between">
+                                    <h2 class="studio-panel-title">Equipes recentes</h2>
+                                    <a href="{{ route('client.teams.index') }}" class="text-xs font-semibold text-[var(--client-accent)]">Voir tout</a>
+                                </div>
+                                <div id="dashboard-teams" class="space-y-3">
+                                    @forelse (($teamsPreview ?? []) as $team)
+                                        <a href="{{ $team['url'] }}" class="neo-list-item block">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <p class="text-sm font-semibold text-slate-900">{{ $team['name'] }}</p>
+                                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">{{ $team['status'] }}</span>
+                                            </div>
+                                            <p class="mt-1 text-xs text-slate-500">Owner: {{ $team['owner'] }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">{{ $team['active_members'] }} membres actifs</p>
+                                        </a>
+                                    @empty
+                                        <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucune equipe visible.</p>
+                                    @endforelse
+                                </div>
+                            </article>
+                        @endif
+
+                        @if (auth()->user()->hasPermission('users.read'))
+                            <article class="studio-panel neo-animate" style="animation-delay: 280ms;">
+                                <div class="mb-4 flex items-center justify-between">
+                                    <h2 class="studio-panel-title">Ressources actives</h2>
+                                    <a href="{{ route('client.users.index') }}" class="text-xs font-semibold text-[var(--client-accent)]">Voir tout</a>
+                                </div>
+                                <div id="dashboard-users" class="space-y-3">
+                                    @forelse (($usersPreview ?? []) as $member)
+                                        <div class="neo-list-item">
+                                            <p class="text-sm font-semibold text-slate-900">{{ $member['name'] }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">{{ $member['role'] }} | {{ $member['last_seen_at'] }}</p>
+                                            <p class="mt-1 text-xs text-slate-500">{{ $member['open_tasks'] }} taches ouvertes | {{ $member['active_teams'] }} equipes</p>
+                                        </div>
+                                    @empty
+                                        <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucun utilisateur actif visible.</p>
+                                    @endforelse
+                                </div>
+                            </article>
+                        @endif
+                    </section>
+                @endif
             </div>
         </section>
     </div>
@@ -401,6 +476,8 @@
                         stats: config.initialStats ?? {},
                         projectsPreview: config.initialProjects ?? [],
                         tasksPreview: config.initialTasks ?? [],
+                        usersPreview: config.initialUsers ?? [],
+                        teamsPreview: config.initialTeams ?? [],
                         statusBreakdown: config.initialStatusBreakdown ?? {},
                         velocity: config.initialVelocity ?? [],
                         projectLoad: config.initialProjectLoad ?? [],
@@ -453,10 +530,16 @@
                     this.setText('[data-live-stat="projects_total"]', String(stats.projects_total ?? 0));
                     this.setText('[data-live-stat="tasks_total"]', String(stats.tasks_total ?? 0));
                     this.setText('[data-live-stat="tasks_overdue"]', String(stats.tasks_overdue ?? 0));
+                    this.setText('[data-live-stat="tasks_due_week"]', String(stats.tasks_due_week ?? 0));
                     this.setText('[data-live-stat="my_open_tasks"]', String(stats.my_open_tasks ?? 0));
+                    this.setText('[data-live-stat="teams_total"]', String(stats.teams_total ?? 0));
+                    this.setText('[data-live-stat="users_total"]', String(stats.users_total ?? 0));
+                    this.setText('[data-live-stat="timesheet_hours_week"]', String(stats.timesheet_hours_week ?? 0));
                     this.setText('[data-live-stat="notifications_unread"]', String(stats.notifications_unread ?? 0));
                     this.setText('[data-live-projects-active]', `${stats.projects_active ?? 0} actifs`);
                     this.setText('[data-live-tasks-done]', `${stats.tasks_done ?? 0} terminees`);
+                    this.setText('[data-live-teams-active]', `${stats.teams_active ?? 0} actives`);
+                    this.setText('[data-live-users-active]', `${stats.users_active ?? 0} actifs`);
                     this.setText('[data-live-updated-at]', `Derniere synchro: ${payload.updated_at ?? 'maintenant'}`);
 
                     this.renderVelocity(payload.velocity ?? []);
@@ -464,6 +547,8 @@
                     this.renderProjectLoad(payload.projectLoad ?? payload.project_load ?? []);
                     this.renderProjects(payload.projectsPreview ?? payload.projects_preview ?? []);
                     this.renderTasks(payload.tasksPreview ?? payload.tasks_preview ?? []);
+                    this.renderTeams(payload.teamsPreview ?? payload.teams_preview ?? []);
+                    this.renderUsers(payload.usersPreview ?? payload.users_preview ?? []);
                 },
                 renderVelocity(points) {
                     const area = document.getElementById('velocity-area');
@@ -635,6 +720,47 @@
                             <p class="text-sm font-semibold text-slate-900">${this.escapeHtml(task.title ?? '')}</p>
                             <p class="mt-1 text-xs text-slate-500">${this.escapeHtml(task.project ?? 'Projet non defini')}</p>
                             <p class="mt-1 text-xs text-slate-500">Echeance: ${this.escapeHtml(task.due_date ?? 'Aucune')}</p>
+                        </div>
+                    `).join('');
+                },
+                renderTeams(teams) {
+                    const container = document.getElementById('dashboard-teams');
+                    if (!container) {
+                        return;
+                    }
+
+                    if (!Array.isArray(teams) || teams.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucune equipe visible.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = teams.map((team) => `
+                        <a href="${this.escapeHtml(team.url ?? '#')}" class="neo-list-item block">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-sm font-semibold text-slate-900">${this.escapeHtml(team.name ?? 'Equipe')}</p>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">${this.escapeHtml(team.status ?? '-')}</span>
+                            </div>
+                            <p class="mt-1 text-xs text-slate-500">Owner: ${this.escapeHtml(team.owner ?? 'N/A')}</p>
+                            <p class="mt-1 text-xs text-slate-500">${Number(team.active_members ?? 0)} membres actifs</p>
+                        </a>
+                    `).join('');
+                },
+                renderUsers(users) {
+                    const container = document.getElementById('dashboard-users');
+                    if (!container) {
+                        return;
+                    }
+
+                    if (!Array.isArray(users) || users.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucun utilisateur actif visible.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = users.map((member) => `
+                        <div class="neo-list-item">
+                            <p class="text-sm font-semibold text-slate-900">${this.escapeHtml(member.name ?? '')}</p>
+                            <p class="mt-1 text-xs text-slate-500">${this.escapeHtml(member.role ?? 'N/A')} | ${this.escapeHtml(member.last_seen_at ?? 'N/A')}</p>
+                            <p class="mt-1 text-xs text-slate-500">${Number(member.open_tasks ?? 0)} taches ouvertes | ${Number(member.active_teams ?? 0)} equipes</p>
                         </div>
                     `).join('');
                 },

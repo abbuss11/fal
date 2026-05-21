@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\TaskAssignedNotification;
 use App\Notifications\TaskStatusUpdatedNotification;
 use App\Notifications\TaskUpdatedNotification;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Support\Collection;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Auth;
 
 class TaskObserver
 {
+    use SendsNotificationsSafely;
+
     /**
      * Handle the Task "creating" event.
      */
@@ -205,7 +208,10 @@ class TaskObserver
             return;
         }
 
-        $assignee->notify(new TaskAssignedNotification($task, $actor));
+        $this->notifySafely($assignee, new TaskAssignedNotification($task, $actor), [
+            'context' => 'task_assigned',
+            'task_id' => $task->id,
+        ]);
     }
 
     private function sendStatusNotification(
@@ -217,7 +223,10 @@ class TaskObserver
         $recipients = $this->statusRecipients($task, $actor);
 
         foreach ($recipients as $recipient) {
-            $recipient->notify(new TaskStatusUpdatedNotification($task, $oldStatus, $newStatus, $actor));
+            $this->notifySafely($recipient, new TaskStatusUpdatedNotification($task, $oldStatus, $newStatus, $actor), [
+                'context' => 'task_status_updated',
+                'task_id' => $task->id,
+            ]);
         }
     }
 
@@ -246,7 +255,10 @@ class TaskObserver
         ]);
 
         foreach ($this->statusRecipients($task, $actor) as $recipient) {
-            $recipient->notify(new TaskUpdatedNotification($task, $changes, $actor));
+            $this->notifySafely($recipient, new TaskUpdatedNotification($task, $changes, $actor), [
+                'context' => 'task_updated',
+                'task_id' => $task->id,
+            ]);
         }
     }
 

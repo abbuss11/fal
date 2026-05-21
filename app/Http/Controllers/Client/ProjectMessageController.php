@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\ProjectMessagePostedNotification;
 use App\Notifications\UserMentionedNotification;
 use App\Services\MentionResolverService;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Http\RedirectResponse;
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
 
 class ProjectMessageController extends Controller
 {
+    use SendsNotificationsSafely;
+
     public function __construct(private readonly MentionResolverService $mentionResolver) {}
 
     public function store(Request $request, Project $project): RedirectResponse
@@ -52,17 +55,25 @@ class ProjectMessageController extends Controller
             ->values();
 
         foreach ($recipients as $recipient) {
-            $recipient->notify(new ProjectMessagePostedNotification($project, $message, $user));
+            $this->notifySafely($recipient, new ProjectMessagePostedNotification($project, $message, $user), [
+                'context' => 'project_message_posted',
+                'project_id' => $project->id,
+                'message_id' => $message->id,
+            ]);
         }
 
         $excerpt = Str::limit($validated['body'], 180);
         foreach ($mentionedUsers as $mentionedUser) {
-            $mentionedUser->notify(new UserMentionedNotification(
+            $this->notifySafely($mentionedUser, new UserMentionedNotification(
                 project: $project,
                 contextLabel: 'le chat interne du projet',
                 excerpt: $excerpt,
                 mentionedBy: $user,
-            ));
+            ), [
+                'context' => 'project_message_mention',
+                'project_id' => $project->id,
+                'message_id' => $message->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_message_posted', [
@@ -105,12 +116,16 @@ class ProjectMessageController extends Controller
 
         $excerpt = Str::limit($validated['body'], 180);
         foreach ($mentionedUsers as $mentionedUser) {
-            $mentionedUser->notify(new UserMentionedNotification(
+            $this->notifySafely($mentionedUser, new UserMentionedNotification(
                 project: $project,
                 contextLabel: 'le chat interne du projet',
                 excerpt: $excerpt,
                 mentionedBy: $user,
-            ));
+            ), [
+                'context' => 'project_message_updated_mention',
+                'project_id' => $project->id,
+                'message_id' => $projectMessage->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_message_updated', [

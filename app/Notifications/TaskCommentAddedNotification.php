@@ -44,7 +44,7 @@ class TaskCommentAddedNotification extends Notification
             ->greeting('Bonjour,')
             ->line("{$authorName} a commente la tache \"{$taskTitle}\".")
             ->line("Commentaire : {$excerpt}")
-            ->action('Voir dans l espace client', url("/client/projects/{$projectId}#comments"))
+            ->action('Voir dans votre espace', url("/client/projects/{$projectId}#comments"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->comment->task_id}/edit"))
             ->line('Merci pour votre collaboration.');
     }

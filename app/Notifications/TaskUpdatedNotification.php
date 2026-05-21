@@ -53,7 +53,7 @@ class TaskUpdatedNotification extends Notification
             ->greeting('Bonjour,')
             ->line("La tache \"{$this->task->title}\" a ete modifiee par {$actor}.")
             ->line('Changements: '.$changesSummary)
-            ->action('Voir dans le portail client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans le workspace', url("/client/projects/{$this->task->project_id}#board"))
             ->line('Vous recevez cet email pour rester synchronise sur le projet.');
     }
 

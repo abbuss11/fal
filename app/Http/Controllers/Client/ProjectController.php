@@ -11,6 +11,7 @@ use App\Models\TaskSubtask;
 use App\Models\User;
 use App\Notifications\ProjectUpdatedNotification;
 use App\Services\ProjectReportService;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Contracts\View\View;
@@ -22,6 +23,8 @@ use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
+    use SendsNotificationsSafely;
+
     private const REVIEW_LANE = 'review';
 
     public function __construct(
@@ -44,8 +47,18 @@ class ProjectController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $clients = Client::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return view('client.projects.index', [
             'projects' => $projects,
+            'clients' => $clients,
+            'statusOptions' => Project::statusOptions(),
+            'priorityOptions' => Project::priorityOptions(),
+            'canCreateProject' => $user->hasPermission('projects.create'),
+            'canUpdateProject' => $user->hasPermission('projects.update'),
+            'canDeleteProject' => $user->hasPermission('projects.delete'),
         ]);
     }
 
@@ -358,12 +371,16 @@ class ProjectController extends Controller
 
         $member = User::query()->find($validated['user_id']);
         if ($member) {
-            $member->notify(new ProjectUpdatedNotification(
+            $this->notifySafely($member, new ProjectUpdatedNotification(
                 project: $project,
                 subjectLine: 'Vous avez ete ajoute au projet',
                 details: 'Votre compte a ete ajoute a un projet collaboratif.',
                 updatedBy: $user,
-            ));
+            ), [
+                'context' => 'project_member_added',
+                'project_id' => $project->id,
+                'member_id' => $member->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_member_added', [
@@ -394,12 +411,16 @@ class ProjectController extends Controller
             'is_active' => (bool) $validated['is_active'],
         ]);
 
-        $member->notify(new ProjectUpdatedNotification(
+        $this->notifySafely($member, new ProjectUpdatedNotification(
             project: $project,
             subjectLine: 'Mise a jour de votre role projet',
             details: 'Votre role ou votre statut actif sur le projet a ete modifie.',
             updatedBy: $user,
-        ));
+        ), [
+            'context' => 'project_member_updated',
+            'project_id' => $project->id,
+            'member_id' => $member->id,
+        ]);
 
         WorkspaceBroadcaster::forProject($project, 'project_member_updated', [
             'member_id' => $member->id,
@@ -420,12 +441,16 @@ class ProjectController extends Controller
 
         $project->members()->detach($member->id);
 
-        $member->notify(new ProjectUpdatedNotification(
+        $this->notifySafely($member, new ProjectUpdatedNotification(
             project: $project,
             subjectLine: 'Retrait du projet',
             details: 'Votre compte a ete retire de ce projet.',
             updatedBy: $user,
-        ));
+        ), [
+            'context' => 'project_member_removed',
+            'project_id' => $project->id,
+            'member_id' => $member->id,
+        ]);
 
         WorkspaceBroadcaster::forProject($project, 'project_member_removed', [
             'member_id' => $member->id,

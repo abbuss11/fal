@@ -103,6 +103,10 @@ class User extends Authenticatable implements FilamentUser
         return [
             self::ROLE_ADMIN => ['*'],
             self::ROLE_MANAGER => [
+                'users.read',
+                'users.create',
+                'users.update',
+                'users.delete',
                 'dashboard.read',
                 'notifications.read',
                 'projects.read',
@@ -127,9 +131,17 @@ class User extends Authenticatable implements FilamentUser
                 'timesheets.read',
                 'timesheets.create',
                 'timesheets.update',
+                'teams.read',
+                'teams.create',
+                'teams.update',
+                'teams.delete',
+                'teams.manage_members',
                 'clients.read',
             ],
             self::ROLE_PROJECT_MANAGER => [
+                'users.read',
+                'users.create',
+                'users.update',
                 'projects.read',
                 'projects.create',
                 'projects.update',
@@ -152,6 +164,11 @@ class User extends Authenticatable implements FilamentUser
                 'timesheets.read',
                 'timesheets.create',
                 'timesheets.update',
+                'teams.read',
+                'teams.create',
+                'teams.update',
+                'teams.delete',
+                'teams.manage_members',
                 'dashboard.read',
                 'notifications.read',
             ],
@@ -170,6 +187,7 @@ class User extends Authenticatable implements FilamentUser
                 'files.create',
                 'timesheets.read',
                 'timesheets.create',
+                'teams.read',
                 'dashboard.read',
                 'notifications.read',
             ],
@@ -299,9 +317,62 @@ class User extends Authenticatable implements FilamentUser
             ->exists();
     }
 
+    public function visibleTeamsQuery(): Builder
+    {
+        $query = Team::query();
+
+        if ($this->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $builder): void {
+            $builder
+                ->where('owner_id', $this->id)
+                ->orWhereHas('members', function (Builder $memberQuery): void {
+                    $memberQuery
+                        ->where('users.id', $this->id)
+                        ->where('team_user.is_active', true);
+                });
+        });
+    }
+
+    public function canAccessTeam(Team $team): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if ($team->owner_id === $this->id) {
+            return true;
+        }
+
+        return $team->members()
+            ->where('users.id', $this->id)
+            ->wherePivot('is_active', true)
+            ->exists();
+    }
+
+    public function canManageTeam(Team $team): bool
+    {
+        if ($this->isAdmin() || $team->owner_id === $this->id) {
+            return true;
+        }
+
+        return $team->members()
+            ->where('users.id', $this->id)
+            ->wherePivot('is_active', true)
+            ->wherePivotIn('role', [self::ROLE_PROJECT_MANAGER, self::ROLE_MANAGER])
+            ->exists();
+    }
+
     public function ownedProjects(): HasMany
     {
         return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    public function ownedTeams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'owner_id');
     }
 
     public function projects(): BelongsToMany
@@ -314,6 +385,18 @@ class User extends Authenticatable implements FilamentUser
     public function activeProjects(): BelongsToMany
     {
         return $this->projects()->wherePivot('is_active', true);
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class)
+            ->withPivot(['role', 'is_active'])
+            ->withTimestamps();
+    }
+
+    public function activeTeams(): BelongsToMany
+    {
+        return $this->teams()->wherePivot('is_active', true);
     }
 
     public function comments(): HasMany

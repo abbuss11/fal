@@ -41,7 +41,7 @@
                                     {{ strtoupper($otherLocale) }}
                                 </a>
                             </div>
-
+ <!----
                             <h1 class="max-w-xl text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
                                 {{ __('ui.guest.hero_title') }}
                             </h1>
@@ -61,6 +61,7 @@
                                     <p class="text-xs text-slate-500">{{ __('ui.guest.metric_execution_desc') }}</p>
                                 </article>
                             </div>
+                            --->
                         </div>
 
                         <p class="saas-hero-content mt-4 text-xs text-slate-500">

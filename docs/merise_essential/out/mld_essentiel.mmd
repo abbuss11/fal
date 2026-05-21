@@ -1,0 +1,85 @@
+erDiagram
+    USERS {
+        BIGINT id PK
+        VARCHAR(255) name
+        VARCHAR(255) email
+        VARCHAR(32) role
+        TINYINT(1) is_active
+    }
+    CLIENTS {
+        BIGINT id PK
+        VARCHAR(255) name
+        VARCHAR(255) email
+        VARCHAR(255) company
+    }
+    PROJECTS {
+        BIGINT id PK
+        BIGINT owner_id FK
+        BIGINT client_id FK
+        VARCHAR(255) name
+        VARCHAR(32) status
+        VARCHAR(20) priority
+        DATE start_date
+        DATE due_date
+    }
+    PROJECT_USER {
+        BIGINT id PK
+        BIGINT project_id FK
+        BIGINT user_id FK
+        VARCHAR(32) project_role
+        TINYINT(1) is_active
+    }
+    TASKS {
+        BIGINT id PK
+        BIGINT project_id FK
+        BIGINT assigned_to FK
+        VARCHAR(255) title
+        VARCHAR(32) status
+        VARCHAR(20) priority
+        DATETIME due_date
+    }
+    TASK_SUBTASKS {
+        BIGINT id PK
+        BIGINT task_id FK
+        VARCHAR(255) title
+        TINYINT(1) is_completed
+        BIGINT completed_by FK
+    }
+    TASK_COMMENTS {
+        BIGINT id PK
+        BIGINT task_id FK
+        BIGINT user_id FK
+        TEXT content
+    }
+    PROJECT_FILES {
+        BIGINT id PK
+        BIGINT project_id FK
+        BIGINT task_id FK
+        BIGINT uploaded_by FK
+        VARCHAR(255) logical_name
+        VARCHAR(255) file_path
+    }
+    TIMESHEETS {
+        BIGINT id PK
+        BIGINT user_id FK
+        BIGINT project_id FK
+        BIGINT task_id FK
+        DECIMAL(6,2) hours
+        DATE work_date
+    }
+    USERS ||--o{ PROJECTS : "owner_id"
+    CLIENTS ||--o{ PROJECTS : "client_id"
+    PROJECTS ||--o{ PROJECT_USER : "project_id"
+    USERS ||--o{ PROJECT_USER : "user_id"
+    PROJECTS ||--o{ TASKS : "project_id"
+    USERS ||--o{ TASKS : "assigned_to"
+    TASKS ||--o{ TASK_SUBTASKS : "task_id"
+    USERS ||--o{ TASK_SUBTASKS : "completed_by"
+    TASKS ||--o{ TASK_COMMENTS : "task_id"
+    USERS ||--o{ TASK_COMMENTS : "user_id"
+    PROJECTS ||--o{ PROJECT_FILES : "project_id"
+    TASKS ||--o{ PROJECT_FILES : "task_id"
+    USERS ||--o{ PROJECT_FILES : "uploaded_by"
+    USERS ||--o{ TIMESHEETS : "user_id"
+    PROJECTS ||--o{ TIMESHEETS : "project_id"
+    TASKS ||--o{ TIMESHEETS : "task_id"

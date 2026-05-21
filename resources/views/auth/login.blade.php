@@ -2,7 +2,6 @@
     <div class="mb-6">
         <p class="fal-brand-kicker">{{ __('ui.auth.login.kicker') }}</p>
         <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ __('ui.auth.login.title') }}</h1>
-        <p class="mt-2 text-sm text-slate-600">{{ __('ui.auth.login.subtitle') }}</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />

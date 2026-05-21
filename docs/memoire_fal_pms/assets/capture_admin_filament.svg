@@ -1,0 +1,87 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="860" viewBox="0 0 1360 860">
+  <defs>
+    <style>
+      .h{font:700 18px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .t{font:500 12px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .sm{font:600 11px 'Segoe UI',Arial,sans-serif;fill:#486581}
+    </style>
+  </defs>
+  <rect width="1360" height="860" fill="#eef3f8"/>
+  <rect x="24" y="24" width="1312" height="812" rx="14" fill="#fff" stroke="#cbd5e0" stroke-width="2"/>
+  <rect x="24" y="24" width="1312" height="52" rx="14" fill="#111827"/>
+  <text x="120" y="56" fill="#f8fafc" style="font:600 14px 'Segoe UI',Arial,sans-serif;">Capture 4 - Espace Admin Filament</text>
+
+  <rect x="44" y="96" width="220" height="720" rx="10" fill="#0f172a"/>
+  <text x="62" y="128" fill="#e2e8f0" style="font:700 16px 'Segoe UI',Arial,sans-serif;">Admin Panel</text>
+  <text x="62" y="160" fill="#94a3b8" style="font:500 12px 'Segoe UI',Arial,sans-serif;">Dashboard</text>
+  <text x="62" y="188" fill="#94a3b8" style="font:500 12px 'Segoe UI',Arial,sans-serif;">Users</text>
+  <text x="62" y="216" fill="#94a3b8" style="font:500 12px 'Segoe UI',Arial,sans-serif;">Projects</text>
+  <rect x="56" y="226" width="192" height="30" rx="6" fill="#1d4ed8"/>
+  <text x="72" y="246" fill="#fff" style="font:600 12px 'Segoe UI',Arial,sans-serif;">Tasks</text>
+  <text x="62" y="276" fill="#94a3b8" style="font:500 12px 'Segoe UI',Arial,sans-serif;">Clients</text>
+
+  <text x="292" y="128" class="h">Gestion administrative des tâches</text>
+  <text x="292" y="150" class="sm">CRUD, calendrier, kanban, supervision multi-projets</text>
+
+  <rect x="292" y="170" width="1016" height="70" rx="10" fill="#f8fafc" stroke="#d1d5db"/>
+  <rect x="310" y="190" width="260" height="30" rx="6" fill="#fff" stroke="#d1d5db"/>
+  <text x="322" y="210" class="t">Recherche: titre, projet, assigné...</text>
+  <rect x="590" y="190" width="110" height="30" rx="6" fill="#fff" stroke="#d1d5db"/>
+  <text x="624" y="210" class="t">Statut</text>
+  <rect x="714" y="190" width="110" height="30" rx="6" fill="#fff" stroke="#d1d5db"/>
+  <text x="744" y="210" class="t">Priorité</text>
+  <rect x="1180" y="188" width="110" height="34" rx="6" fill="#16a34a"/>
+  <text x="1212" y="210" fill="#fff" style="font:600 12px 'Segoe UI',Arial,sans-serif;">+ Tâche</text>
+
+  <rect x="292" y="256" width="1016" height="560" rx="10" fill="#fff" stroke="#cbd5e0"/>
+
+  <rect x="292" y="256" width="1016" height="42" fill="#f8fafc"/>
+  <text x="308" y="282" class="sm">ID</text>
+  <text x="360" y="282" class="sm">Titre</text>
+  <text x="650" y="282" class="sm">Projet</text>
+  <text x="860" y="282" class="sm">Assigné</text>
+  <text x="980" y="282" class="sm">Statut</text>
+  <text x="1070" y="282" class="sm">Priorité</text>
+  <text x="1180" y="282" class="sm">Actions</text>
+
+  <rect x="300" y="308" width="1000" height="44" rx="6" fill="#fff" stroke="#edf2f7"/>
+  <text x="308" y="336" class="t">#145</text>
+  <text x="360" y="336" class="t">Intégration Export PDF</text>
+  <text x="650" y="336" class="t">FAL PMS Core</text>
+  <text x="860" y="336" class="t">A. Idrissa</text>
+  <text x="980" y="336" class="t">review</text>
+  <text x="1070" y="336" class="t">high</text>
+  <text x="1180" y="336" class="t">Voir | Edit</text>
+
+  <rect x="300" y="360" width="1000" height="44" rx="6" fill="#fff" stroke="#edf2f7"/>
+  <text x="308" y="388" class="t">#146</text>
+  <text x="360" y="388" class="t">Refonte notifications push</text>
+  <text x="650" y="388" class="t">Mobile API</text>
+  <text x="860" y="388" class="t">M. Ousmane</text>
+  <text x="980" y="388" class="t">doing</text>
+  <text x="1070" y="388" class="t">urgent</text>
+  <text x="1180" y="388" class="t">Voir | Edit</text>
+
+  <rect x="300" y="412" width="1000" height="44" rx="6" fill="#fff" stroke="#edf2f7"/>
+  <text x="308" y="440" class="t">#147</text>
+  <text x="360" y="440" class="t">Archivage projet + duplication</text>
+  <text x="650" y="440" class="t">Project Mgmt</text>
+  <text x="860" y="440" class="t">D. Yacouba</text>
+  <text x="980" y="440" class="t">done</text>
+  <text x="1070" y="440" class="t">medium</text>
+  <text x="1180" y="440" class="t">Voir | Edit</text>
+
+  <rect x="300" y="488" width="492" height="300" rx="10" fill="#f8fafc" stroke="#d1d5db"/>
+  <text x="320" y="520" class="h">Calendrier Admin</text>
+  <rect x="320" y="538" width="452" height="228" rx="8" fill="#fff" stroke="#e2e8f0"/>
+  <text x="336" y="564" class="t">Vue mensuelle des échéances critiques</text>
+
+  <rect x="816" y="488" width="484" height="300" rx="10" fill="#f8fafc" stroke="#d1d5db"/>
+  <text x="836" y="520" class="h">Kanban Supervision</text>
+  <rect x="836" y="538" width="146" height="228" rx="8" fill="#fff" stroke="#e2e8f0"/>
+  <rect x="988" y="538" width="146" height="228" rx="8" fill="#fff" stroke="#e2e8f0"/>
+  <rect x="1140" y="538" width="146" height="228" rx="8" fill="#fff" stroke="#e2e8f0"/>
+  <text x="852" y="560" class="sm">ToDo</text>
+  <text x="1010" y="560" class="sm">Doing</text>
+  <text x="1165" y="560" class="sm">Done</text>
+</svg>

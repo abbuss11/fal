@@ -86,7 +86,7 @@
                                     <p class="saas-kpi-help">Pipeline multi-equipes</p>
                                 </article>
                                 <article class="saas-kpi-card">
-                                    <p class="saas-kpi-label">Delivery rate</p>
+                                    <p class="saas-kpi-label">Livraison</p>
                                     <p class="saas-kpi-value">84%</p>
                                     <p class="saas-kpi-help">Objectifs tenus ce mois</p>
                                 </article>
@@ -106,18 +106,18 @@
                     </div>
                 </div>
             </section>
-
+<!---
             <section class="client-shell py-3">
                 <div class="saas-kpi-grid">
                     <article class="saas-kpi-card">
-                        <p class="saas-kpi-label">Command Center</p>
+                        <p class="saas-kpi-label">Space de control</p>
                         <p class="saas-kpi-value">Dashboard live</p>
-                        <p class="saas-kpi-help">KPIs, alertes et tendances hebdo</p>
+                        <p class="saas-kpi-help">KPIs &tendances hebdo</p>
                     </article>
                     <article class="saas-kpi-card">
                         <p class="saas-kpi-label">Execution</p>
-                        <p class="saas-kpi-value">Board + Calendar</p>
-                        <p class="saas-kpi-help">Flux Jira-like et timeline terrain</p>
+                        <p class="saas-kpi-value">Tableau + Calendrier</p>
+                        <p class="saas-kpi-help">Flux et timeline terrain</p>
                     </article>
                     <article class="saas-kpi-card">
                         <p class="saas-kpi-label">Collaboration</p>
@@ -153,6 +153,7 @@
                     </article>
                 </div>
             </section>
+            --->
         </main>
 
         <footer class="border-t border-[var(--client-line)] bg-white/75 py-6">

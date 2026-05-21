@@ -50,7 +50,7 @@ class TaskStatusUpdatedNotification extends Notification
             ->line("Le statut de la tache \"{$this->task->title}\" a ete modifie par {$changedBy}.")
             ->line("Ancien statut : {$from}")
             ->line("Nouveau statut : {$to}")
-            ->action('Voir dans l espace client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans votre workspace', url("/client/projects/{$this->task->project_id}#board"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->task->id}/edit"))
             ->line('Merci de suivre les avancements.');
     }

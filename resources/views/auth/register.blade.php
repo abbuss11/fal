@@ -2,7 +2,6 @@
     <div class="mb-6">
         <p class="fal-brand-kicker">{{ __('ui.auth.register.kicker') }}</p>
         <h1 class="mt-2 text-2xl font-semibold text-slate-900">{{ __('ui.auth.register.title') }}</h1>
-        <p class="mt-2 text-sm text-slate-600">{{ __('ui.auth.register.subtitle') }}</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-4">

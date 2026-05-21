@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\Project;
 use App\Models\User;
 use App\Notifications\ProjectUpdatedNotification;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Support\Collection;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ProjectObserver
 {
+    use SendsNotificationsSafely;
+
     /**
      * Handle the Project "created" event.
      */
@@ -20,12 +23,15 @@ class ProjectObserver
         $actor = Auth::user();
 
         foreach ($this->recipients($project, $actor instanceof User ? $actor : null) as $recipient) {
-            $recipient->notify(new ProjectUpdatedNotification(
+            $this->notifySafely($recipient, new ProjectUpdatedNotification(
                 project: $project,
                 subjectLine: 'Nouveau projet cree',
                 details: 'Un nouveau projet a ete cree et vous etes implique dans son execution.',
                 updatedBy: $actor instanceof User ? $actor : null,
-            ));
+            ), [
+                'context' => 'project_created',
+                'project_id' => $project->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_created');
@@ -47,12 +53,15 @@ class ProjectObserver
         $details = 'Changements projet: '.implode(', ', $changes);
 
         foreach ($this->recipients($project, $actor instanceof User ? $actor : null) as $recipient) {
-            $recipient->notify(new ProjectUpdatedNotification(
+            $this->notifySafely($recipient, new ProjectUpdatedNotification(
                 project: $project,
                 subjectLine: 'Mise a jour du projet',
                 details: $details,
                 updatedBy: $actor instanceof User ? $actor : null,
-            ));
+            ), [
+                'context' => 'project_updated',
+                'project_id' => $project->id,
+            ]);
         }
 
         WorkspaceBroadcaster::forProject($project, 'project_updated');

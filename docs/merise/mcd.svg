@@ -1,0 +1,171 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1400" viewBox="0 0 2200 1400">
+  <defs>
+    <style>
+      .title{font:700 36px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .subtitle{font:600 20px 'Segoe UI',Arial,sans-serif;fill:#334e68}
+      .entity{fill:#ebf8ff;stroke:#2b6cb0;stroke-width:2}
+      .assoc{fill:#fff7e6;stroke:#d69e2e;stroke-width:2}
+      .h{font:700 17px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .a{font:500 14px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .c{font:600 13px 'Segoe UI',Arial,sans-serif;fill:#1f3c88}
+      .legend{font:500 14px 'Segoe UI',Arial,sans-serif;fill:#486581}
+      .line{stroke:#334e68;stroke-width:2}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="2200" height="1400" fill="#f4f8fb"/>
+  <rect x="24" y="20" width="2152" height="1358" rx="18" fill="#fff" stroke="#bcccdc" stroke-width="2"/>
+
+  <text x="60" y="84" class="title">MCD - Modèle Conceptuel de Données</text>
+  <text x="60" y="118" class="subtitle">Système de gestion de projets collaboratifs (règles RG1 à RG19)</text>
+
+  <!-- Entities row top -->
+  <rect x="90" y="190" width="290" height="180" rx="10" class="entity"/>
+  <text x="108" y="222" class="h">UTILISATEUR</text>
+  <text x="108" y="248" class="a">#id_utilisateur</text>
+  <text x="108" y="270" class="a">nom, prenom</text>
+  <text x="108" y="292" class="a">email, mot_de_passe</text>
+  <text x="108" y="314" class="a">role, telephone</text>
+  <text x="108" y="336" class="a">statut_compte</text>
+
+  <rect x="520" y="190" width="290" height="180" rx="10" class="entity"/>
+  <text x="538" y="222" class="h">CLIENT</text>
+  <text x="538" y="248" class="a">#id_client</text>
+  <text x="538" y="270" class="a">nom_client</text>
+  <text x="538" y="292" class="a">email_client</text>
+  <text x="538" y="314" class="a">telephone_client</text>
+  <text x="538" y="336" class="a">organisation</text>
+
+  <rect x="950" y="190" width="320" height="200" rx="10" class="entity"/>
+  <text x="968" y="222" class="h">PROJET</text>
+  <text x="968" y="248" class="a">#id_projet</text>
+  <text x="968" y="270" class="a">titre, description</text>
+  <text x="968" y="292" class="a">date_debut, date_fin</text>
+  <text x="968" y="314" class="a">statut, budget</text>
+  <text x="968" y="336" class="a">priorite, objectif</text>
+  <text x="968" y="358" class="a">id_chef_projet(FK logique)</text>
+
+  <rect x="1440" y="190" width="320" height="220" rx="10" class="entity"/>
+  <text x="1458" y="222" class="h">TACHE</text>
+  <text x="1458" y="248" class="a">#id_tache</text>
+  <text x="1458" y="270" class="a">titre, description</text>
+  <text x="1458" y="292" class="a">priorite, statut</text>
+  <text x="1458" y="314" class="a">date_echeance</text>
+  <text x="1458" y="336" class="a">temps_estime, temps_reel</text>
+  <text x="1458" y="358" class="a">id_projet(FK logique)</text>
+  <text x="1458" y="380" class="a">id_parent_tache(optionnel)</text>
+
+  <!-- Middle row -->
+  <rect x="120" y="560" width="320" height="180" rx="10" class="entity"/>
+  <text x="138" y="592" class="h">EQUIPE</text>
+  <text x="138" y="618" class="a">#id_equipe</text>
+  <text x="138" y="640" class="a">nom_equipe</text>
+  <text x="138" y="662" class="a">description_equipe</text>
+  <text x="138" y="684" class="a">id_chef_equipe</text>
+  <text x="138" y="706" class="a">date_creation</text>
+
+  <rect x="560" y="560" width="300" height="130" rx="10" class="assoc"/>
+  <text x="578" y="596" class="h">EQUIPE_MEMBRE</text>
+  <text x="578" y="620" class="a">date_entree</text>
+  <text x="578" y="642" class="a">role_dans_equipe</text>
+
+  <rect x="950" y="560" width="300" height="130" rx="10" class="assoc"/>
+  <text x="968" y="596" class="h">EQUIPE_PROJET</text>
+  <text x="968" y="620" class="a">date_affectation</text>
+  <text x="968" y="642" class="a">responsabilite</text>
+
+  <rect x="1360" y="560" width="300" height="130" rx="10" class="assoc"/>
+  <text x="1378" y="596" class="h">AFFECTATION</text>
+  <text x="1378" y="620" class="a">date_debut</text>
+  <text x="1378" y="642" class="a">date_fin</text>
+
+  <rect x="1780" y="560" width="320" height="180" rx="10" class="entity"/>
+  <text x="1798" y="592" class="h">COMMENTAIRE</text>
+  <text x="1798" y="618" class="a">#id_commentaire</text>
+  <text x="1798" y="640" class="a">contenu</text>
+  <text x="1798" y="662" class="a">date_commentaire</text>
+  <text x="1798" y="684" class="a">id_tache(FK logique)</text>
+  <text x="1798" y="706" class="a">id_auteur(FK logique)</text>
+
+  <!-- Bottom row -->
+  <rect x="760" y="930" width="320" height="180" rx="10" class="entity"/>
+  <text x="778" y="962" class="h">DOCUMENT</text>
+  <text x="778" y="988" class="a">#id_document</text>
+  <text x="778" y="1010" class="a">nom_fichier, chemin</text>
+  <text x="778" y="1032" class="a">taille, type_mime</text>
+  <text x="778" y="1054" class="a">date_upload</text>
+  <text x="778" y="1076" class="a">id_projet, id_auteur</text>
+
+  <!-- Links + cardinalities -->
+  <line x1="810" y1="280" x2="950" y2="280" class="line"/>
+  <text x="835" y="268" class="c">(0,N)</text>
+  <text x="900" y="268" class="c">concerne</text>
+  <text x="912" y="302" class="c">(1,1)</text>
+
+  <line x1="380" y1="250" x2="950" y2="250" class="line"/>
+  <text x="430" y="238" class="c">(0,N)</text>
+  <text x="650" y="238" class="c">gère (chef de projet)</text>
+  <text x="905" y="240" class="c">(1,1)</text>
+
+  <line x1="1270" y1="300" x2="1440" y2="300" class="line"/>
+  <text x="1302" y="288" class="c">(1,N)</text>
+  <text x="1362" y="288" class="c">contient</text>
+  <text x="1400" y="322" class="c">(1,1)</text>
+
+  <line x1="290" y1="370" x2="290" y2="560" class="line"/>
+  <text x="300" y="470" class="c">(0,N)</text>
+  <text x="300" y="490" class="c">appartient</text>
+  <text x="300" y="510" class="c">(1,1) chef</text>
+
+  <line x1="380" y1="640" x2="560" y2="640" class="line"/>
+  <text x="420" y="626" class="c">(1,N)</text>
+  <text x="492" y="626" class="c">compose</text>
+  <text x="524" y="660" class="c">(1,1)</text>
+
+  <line x1="380" y1="280" x2="560" y2="595" class="line"/>
+  <text x="430" y="438" class="c">(0,N)</text>
+  <text x="505" y="438" class="c">membre</text>
+  <text x="548" y="560" class="c">(1,1)</text>
+
+  <line x1="440" y1="620" x2="950" y2="620" class="line"/>
+  <text x="598" y="608" class="c">(0,N)</text>
+  <text x="740" y="608" class="c">travaille sur</text>
+  <text x="914" y="642" class="c">(1,1)</text>
+
+  <line x1="1110" y1="390" x2="1110" y2="560" class="line"/>
+  <text x="1120" y="478" class="c">(0,N)</text>
+  <text x="1120" y="498" class="c">est géré par</text>
+  <text x="1120" y="518" class="c">(1,1)</text>
+
+  <line x1="1600" y1="410" x2="1510" y2="560" class="line"/>
+  <text x="1550" y="486" class="c">(0,N)</text>
+  <text x="1540" y="508" class="c">affectée via</text>
+  <text x="1502" y="550" class="c">(1,1)</text>
+
+  <line x1="380" y1="300" x2="1360" y2="595" class="line"/>
+  <text x="860" y="430" class="c">(0,N) réalise</text>
+  <text x="1330" y="580" class="c">(1,1)</text>
+
+  <line x1="1760" y1="650" x2="1780" y2="650" class="line"/>
+  <text x="1710" y="638" class="c">(0,N)</text>
+  <text x="1686" y="660" class="c">reçoit</text>
+  <text x="1738" y="680" class="c">(1,1)</text>
+
+  <line x1="380" y1="330" x2="1780" y2="590" class="line"/>
+  <text x="930" y="520" class="c">(0,N) rédige</text>
+  <text x="1742" y="582" class="c">(1,1)</text>
+
+  <line x1="1110" y1="390" x2="920" y2="930" class="line"/>
+  <text x="1030" y="670" class="c">(0,N)</text>
+  <text x="995" y="692" class="c">contient</text>
+  <text x="930" y="905" class="c">(1,1)</text>
+
+  <line x1="380" y1="350" x2="760" y2="990" class="line"/>
+  <text x="530" y="690" class="c">(0,N) upload</text>
+  <text x="726" y="974" class="c">(1,1)</text>
+
+  <rect x="60" y="1170" width="2080" height="176" rx="12" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="84" y="1212" class="legend">Légende : bleu = entités, ocre = associations porteuses d'attributs.</text>
+  <text x="84" y="1242" class="legend">Cardinalités notées (min,max). Ce MCD suit les règles métier du mémoire (RG1-RG19).</text>
+  <text x="84" y="1272" class="legend">Les modules avancés (tags, dépendances, notifications, timesheets) peuvent être ajoutés comme extension du noyau conceptuel.</text>
+</svg>

@@ -1,0 +1,161 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1500" viewBox="0 0 2200 1500">
+  <defs>
+    <style>
+      .title{font:700 36px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .subtitle{font:600 20px 'Segoe UI',Arial,sans-serif;fill:#334e68}
+      .panel{fill:#ffffff;stroke:#7b8794;stroke-width:2}
+      .head{fill:#e6fffa;stroke:#2f855a;stroke-width:2}
+      .h{font:700 16px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .t{font:500 13px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .k{font:600 12px 'Segoe UI',Arial,sans-serif;fill:#1f3c88}
+      .legend{font:500 14px 'Segoe UI',Arial,sans-serif;fill:#486581}
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="2200" height="1500" fill="#f4f8fb"/>
+  <rect x="22" y="20" width="2156" height="1458" rx="18" fill="#fff" stroke="#bcccdc" stroke-width="2"/>
+
+  <text x="58" y="84" class="title">MPD - Modèle Physique de Données</text>
+  <text x="58" y="118" class="subtitle">Cible MySQL 8+ / MariaDB 10.6+ (InnoDB, utf8mb4)</text>
+
+  <rect x="58" y="154" width="2084" height="120" rx="10" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="82" y="192" class="legend">Paramètres physiques globaux : ENGINE=InnoDB, CHARSET=utf8mb4, COLLATE=utf8mb4_unicode_ci.</text>
+  <text x="82" y="220" class="legend">Stratégie d'intégrité : FKs explicites + index sur colonnes de jointure + contraintes d'unicité métier.</text>
+  <text x="82" y="248" class="legend">Conventions : PK BIGINT UNSIGNED AUTO_INCREMENT, timestamps `created_at`/`updated_at`.</text>
+
+  <!-- users -->
+  <rect x="58" y="310" width="460" height="44" class="head"/>
+  <rect x="58" y="354" width="460" height="268" class="panel"/>
+  <text x="76" y="338" class="h">users</text>
+  <text x="74" y="378" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="74" y="398" class="t">name VARCHAR(255) NOT NULL</text>
+  <text x="74" y="418" class="t">email VARCHAR(255) NOT NULL UNIQUE</text>
+  <text x="74" y="438" class="t">password VARCHAR(255) NOT NULL</text>
+  <text x="74" y="458" class="t">role VARCHAR(32) DEFAULT 'member'</text>
+  <text x="74" y="478" class="t">is_admin TINYINT(1) DEFAULT 0</text>
+  <text x="74" y="498" class="t">is_active TINYINT(1) DEFAULT 1</text>
+  <text x="74" y="518" class="t">notify_email/realtime/push TINYINT(1)</text>
+  <text x="74" y="538" class="t">last_seen_at TIMESTAMP NULL</text>
+  <text x="74" y="558" class="k">IDX: role, is_active, last_seen_at</text>
+  <text x="74" y="578" class="k">UK: users_email_unique</text>
+
+  <!-- clients -->
+  <rect x="548" y="310" width="380" height="44" class="head"/>
+  <rect x="548" y="354" width="380" height="200" class="panel"/>
+  <text x="566" y="338" class="h">clients</text>
+  <text x="564" y="378" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="564" y="398" class="t">name VARCHAR(255) NOT NULL</text>
+  <text x="564" y="418" class="t">email VARCHAR(255) NULL</text>
+  <text x="564" y="438" class="t">phone VARCHAR(60) NULL</text>
+  <text x="564" y="458" class="t">company VARCHAR(255) NULL</text>
+  <text x="564" y="478" class="t">address TEXT NULL</text>
+  <text x="564" y="498" class="k">IDX: name, email</text>
+
+  <!-- projects -->
+  <rect x="958" y="310" width="530" height="44" class="head"/>
+  <rect x="958" y="354" width="530" height="300" class="panel"/>
+  <text x="976" y="338" class="h">projects</text>
+  <text x="974" y="378" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="974" y="398" class="t">owner_id BIGINT UNSIGNED NOT NULL FK users(id)</text>
+  <text x="974" y="418" class="t">client_id BIGINT UNSIGNED NULL FK clients(id)</text>
+  <text x="974" y="438" class="t">title VARCHAR(255) NOT NULL</text>
+  <text x="974" y="458" class="t">description TEXT NULL</text>
+  <text x="974" y="478" class="t">status VARCHAR(50) DEFAULT 'planning'</text>
+  <text x="974" y="498" class="t">start_date DATE NULL, due_date DATE NULL</text>
+  <text x="974" y="518" class="t">budget DECIMAL(15,2) NULL</text>
+  <text x="974" y="538" class="t">is_template TINYINT(1) DEFAULT 0</text>
+  <text x="974" y="558" class="t">archived_at TIMESTAMP NULL</text>
+  <text x="974" y="578" class="k">IDX: owner_id, client_id, status, due_date</text>
+  <text x="974" y="598" class="k">FK ON DELETE: owner RESTRICT, client SET NULL</text>
+
+  <!-- tasks -->
+  <rect x="1518" y="310" width="620" height="44" class="head"/>
+  <rect x="1518" y="354" width="620" height="340" class="panel"/>
+  <text x="1536" y="338" class="h">tasks</text>
+  <text x="1534" y="378" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="1534" y="398" class="t">project_id BIGINT UNSIGNED NOT NULL FK projects(id)</text>
+  <text x="1534" y="418" class="t">assigned_to BIGINT UNSIGNED NULL FK users(id)</text>
+  <text x="1534" y="438" class="t">title VARCHAR(255) NOT NULL</text>
+  <text x="1534" y="458" class="t">description TEXT NULL</text>
+  <text x="1534" y="478" class="t">status VARCHAR(50) DEFAULT 'todo'</text>
+  <text x="1534" y="498" class="t">priority VARCHAR(20) DEFAULT 'medium'</text>
+  <text x="1534" y="518" class="t">due_date DATE NULL, start_date DATE NULL</text>
+  <text x="1534" y="538" class="t">estimated_hours DECIMAL(8,2) NULL</text>
+  <text x="1534" y="558" class="t">is_in_review TINYINT(1) DEFAULT 0</text>
+  <text x="1534" y="578" class="t">progress TINYINT UNSIGNED DEFAULT 0</text>
+  <text x="1534" y="598" class="k">IDX: project_id, assigned_to, status, due_date</text>
+  <text x="1534" y="618" class="k">CHECK logique: progress BETWEEN 0 AND 100</text>
+
+  <!-- middle row -->
+  <rect x="58" y="730" width="460" height="44" class="head"/>
+  <rect x="58" y="774" width="460" height="210" class="panel"/>
+  <text x="76" y="758" class="h">project_user (pivot membres projet)</text>
+  <text x="74" y="798" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="74" y="818" class="t">project_id BIGINT UNSIGNED NOT NULL FK projects(id)</text>
+  <text x="74" y="838" class="t">user_id BIGINT UNSIGNED NOT NULL FK users(id)</text>
+  <text x="74" y="858" class="t">role VARCHAR(32) DEFAULT 'member'</text>
+  <text x="74" y="878" class="t">is_active TINYINT(1) DEFAULT 1</text>
+  <text x="74" y="898" class="k">UK conseillé: (project_id, user_id)</text>
+  <text x="74" y="918" class="k">IDX: project_id, user_id, is_active</text>
+
+  <rect x="548" y="730" width="460" height="44" class="head"/>
+  <rect x="548" y="774" width="460" height="230" class="panel"/>
+  <text x="566" y="758" class="h">task_comments</text>
+  <text x="564" y="798" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="564" y="818" class="t">task_id BIGINT UNSIGNED NOT NULL FK tasks(id)</text>
+  <text x="564" y="838" class="t">user_id BIGINT UNSIGNED NOT NULL FK users(id)</text>
+  <text x="564" y="858" class="t">content TEXT NOT NULL</text>
+  <text x="564" y="878" class="t">created_at, updated_at TIMESTAMP NULL</text>
+  <text x="564" y="898" class="k">IDX: task_id, user_id, created_at</text>
+  <text x="564" y="918" class="k">ON DELETE CASCADE pour task_id recommandé</text>
+
+  <rect x="1038" y="730" width="460" height="44" class="head"/>
+  <rect x="1038" y="774" width="460" height="250" class="panel"/>
+  <text x="1056" y="758" class="h">project_files</text>
+  <text x="1054" y="798" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="1054" y="818" class="t">project_id BIGINT UNSIGNED NOT NULL FK projects(id)</text>
+  <text x="1054" y="838" class="t">task_id BIGINT UNSIGNED NULL FK tasks(id)</text>
+  <text x="1054" y="858" class="t">uploaded_by BIGINT UNSIGNED NOT NULL FK users(id)</text>
+  <text x="1054" y="878" class="t">filename VARCHAR(255), path VARCHAR(255)</text>
+  <text x="1054" y="898" class="t">mime_type VARCHAR(120), size BIGINT</text>
+  <text x="1054" y="918" class="t">created_at, updated_at TIMESTAMP NULL</text>
+  <text x="1054" y="938" class="k">IDX: project_id, task_id, uploaded_by</text>
+
+  <rect x="1528" y="730" width="610" height="44" class="head"/>
+  <rect x="1528" y="774" width="610" height="250" class="panel"/>
+  <text x="1546" y="758" class="h">timesheets</text>
+  <text x="1544" y="798" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="1544" y="818" class="t">user_id BIGINT UNSIGNED NOT NULL FK users(id)</text>
+  <text x="1544" y="838" class="t">project_id BIGINT UNSIGNED NOT NULL FK projects(id)</text>
+  <text x="1544" y="858" class="t">task_id BIGINT UNSIGNED NULL FK tasks(id)</text>
+  <text x="1544" y="878" class="t">hours DECIMAL(6,2) NOT NULL CHECK (hours > 0)</text>
+  <text x="1544" y="898" class="t">work_date DATE NOT NULL, notes TEXT NULL</text>
+  <text x="1544" y="918" class="t">created_at, updated_at TIMESTAMP NULL</text>
+  <text x="1544" y="938" class="k">IDX: user_id, project_id, task_id, work_date</text>
+
+  <!-- bottom row -->
+  <rect x="398" y="1080" width="620" height="44" class="head"/>
+  <rect x="398" y="1124" width="620" height="220" class="panel"/>
+  <text x="416" y="1108" class="h">task_dependencies</text>
+  <text x="414" y="1148" class="t">id BIGINT UNSIGNED PK AI</text>
+  <text x="414" y="1168" class="t">task_id BIGINT UNSIGNED NOT NULL FK tasks(id)</text>
+  <text x="414" y="1188" class="t">depends_on_task_id BIGINT UNSIGNED NOT NULL FK tasks(id)</text>
+  <text x="414" y="1208" class="t">created_at, updated_at TIMESTAMP NULL</text>
+  <text x="414" y="1228" class="k">UK conseillé: (task_id, depends_on_task_id)</text>
+  <text x="414" y="1248" class="k">Règle métier: interdire cycles de dépendance</text>
+
+  <rect x="1060" y="1080" width="760" height="44" class="head"/>
+  <rect x="1060" y="1124" width="760" height="220" class="panel"/>
+  <text x="1078" y="1108" class="h">notifications (polymorphique Laravel)</text>
+  <text x="1076" y="1148" class="t">id CHAR/VARCHAR PK</text>
+  <text x="1076" y="1168" class="t">type VARCHAR(255) NOT NULL</text>
+  <text x="1076" y="1188" class="t">notifiable_type VARCHAR(255) NOT NULL</text>
+  <text x="1076" y="1208" class="t">notifiable_id BIGINT UNSIGNED NOT NULL</text>
+  <text x="1076" y="1228" class="t">data JSON/TEXT NOT NULL</text>
+  <text x="1076" y="1248" class="t">read_at TIMESTAMP NULL</text>
+  <text x="1076" y="1268" class="k">IDX: (notifiable_type, notifiable_id), read_at</text>
+
+  <rect x="58" y="1364" width="2084" height="106" rx="12" fill="#f0f4f8" stroke="#bcccdc"/>
+  <text x="82" y="1402" class="legend">Ce MPD synthétise les tables métier principales. Les tables framework (jobs, cache, sessions, tokens) restent inchangées par Laravel.</text>
+  <text x="82" y="1430" class="legend">Les scripts SQL complets sont disponibles dans `DATABASE_FAL_PMS_COMPLETE.sql`.</text>
+</svg>

@@ -31,6 +31,8 @@ return [
         'tasks' => 'Taches',
         'calendar' => 'Calendrier',
         'timesheet' => 'Timesheet',
+        'users' => 'Users',
+        'teams' => 'Equipes',
         'profile' => 'Mon profil',
         'administration' => 'Administration',
         'logout' => 'Se deconnecter',
@@ -48,7 +50,7 @@ return [
     'welcome' => [
         'title' => 'De la planification a la livraison, un seul espace de pilotage.',
         'subtitle' => 'FAL PMS centralise projets, taches, timesheets, collaboration et reporting en temps reel. Chaque equipe avance avec la meme source de verite.',
-        'badge' => 'Project Delivery SaaS',
+        'badge' => 'Project management',
         'open_cockpit' => 'Entrer dans le cockpit',
         'project_portfolio' => 'Portfolio projets',
         'login' => 'Connexion',
@@ -67,9 +69,9 @@ return [
     'auth' => [
         'login' => [
             'kicker' => 'Connexion securisee',
-            'title' => 'Acceder a l\'espace SaaS',
+            'title' => 'Acceder a votre espace',
             'subtitle' => 'Retrouve ton dashboard, tes projets en cours et les actions prioritaires du jour.',
-            'email' => 'Email professionnel',
+            'email' => 'Email',
             'password' => 'Mot de passe',
             'remember' => 'Rester connecte',
             'forgot' => 'Mot de passe oublie?',

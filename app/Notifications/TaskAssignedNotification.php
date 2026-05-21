@@ -47,7 +47,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
             ->line("La tache \"{$this->task->title}\" vous a ete assignee par {$assignedBy}.")
             ->line("Projet : {$projectName}")
             ->line("Echeance : {$dueDate}")
-            ->action('Voir dans l espace client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans votre espace', url("/client/projects/{$this->task->project_id}#board"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->task->id}/edit"))
             ->line('Merci de votre collaboration.');
     }

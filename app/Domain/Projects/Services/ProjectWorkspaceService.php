@@ -84,6 +84,10 @@ class ProjectWorkspaceService
             ],
             'board_columns' => $this->buildBoardColumns($tasks),
             'stats' => $overview['stats'] ?? [],
+            'status_breakdown' => $overview['status_breakdown'] ?? [],
+            'priority_breakdown' => $overview['priority_breakdown'] ?? [],
+            'velocity' => $overview['velocity_last_weeks'] ?? [],
+            'member_workload' => $overview['member_workload'] ?? [],
             'timeline' => $timeline,
             'recent_comments' => $comments
                 ->map(function (TaskComment $comment): array {

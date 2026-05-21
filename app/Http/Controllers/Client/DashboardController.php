@@ -59,6 +59,28 @@ class DashboardController extends Controller
                 ->count(),
         ];
 
+        $priorityBreakdown = collect(array_keys(Task::priorityOptions()))
+            ->mapWithKeys(fn (string $priority): array => [
+                $priority => (clone $tasksQuery)->where('priority', $priority)->count(),
+            ])
+            ->all();
+
+        $dueForecast = collect(range(0, 6))
+            ->map(function (int $daysAhead) use ($tasksQuery): array {
+                $date = now()->copy()->addDays($daysAhead);
+
+                return [
+                    'label' => $date->format('d/m'),
+                    'value' => (clone $tasksQuery)
+                        ->whereIn('status', [Task::STATUS_TODO, Task::STATUS_DOING])
+                        ->whereNotNull('due_date')
+                        ->whereDate('due_date', $date->toDateString())
+                        ->count(),
+                ];
+            })
+            ->values()
+            ->all();
+
         $timesheetHoursWeek = 0.0;
         if ($user->hasPermission('timesheets.read')) {
             $timesheetQuery = Timesheet::query()
@@ -126,6 +148,29 @@ class DashboardController extends Controller
             })
             ->values()
             ->all();
+
+        $tasksTotal = (int) ($stats['tasks_total'] ?? 0);
+        $tasksDone = (int) ($stats['tasks_done'] ?? 0);
+        $tasksOverdue = (int) ($stats['tasks_overdue'] ?? 0);
+        $tasksOpen = max($tasksTotal - $tasksDone, 0);
+
+        $stats['tasks_open'] = $tasksOpen;
+        $stats['completion_rate'] = $tasksTotal > 0
+            ? round(($tasksDone / $tasksTotal) * 100, 1)
+            : 0.0;
+        $stats['on_time_rate'] = $tasksTotal > 0
+            ? round((($tasksTotal - $tasksOverdue) / $tasksTotal) * 100, 1)
+            : 100.0;
+        $stats['throughput_7d'] = collect($velocity)
+            ->sum(fn (array $point): int => (int) ($point['value'] ?? 0));
+        $stats['high_priority_open'] = (clone $tasksQuery)
+            ->whereIn('status', [Task::STATUS_TODO, Task::STATUS_DOING])
+            ->whereIn('priority', [Task::PRIORITY_HIGH, Task::PRIORITY_URGENT])
+            ->count();
+        $stats['urgent_open'] = (clone $tasksQuery)
+            ->whereIn('status', [Task::STATUS_TODO, Task::STATUS_DOING])
+            ->where('priority', Task::PRIORITY_URGENT)
+            ->count();
 
         $projects = (clone $projectsQuery)
             ->with(['owner'])
@@ -257,7 +302,9 @@ class DashboardController extends Controller
             'usersPreview' => $usersPreview,
             'teamsPreview' => $teamsPreview,
             'statusBreakdown' => $statusBreakdown,
+            'priorityBreakdown' => $priorityBreakdown,
             'velocity' => $velocity,
+            'dueForecast' => $dueForecast,
             'projectLoad' => $projectLoad,
             'updated_at' => now()->toDateTimeString(),
         ];

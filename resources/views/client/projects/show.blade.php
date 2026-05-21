@@ -5,6 +5,14 @@
     $timeline = $overview['timeline'];
     $memberWorkload = $overview['member_workload'];
     $velocity = $overview['velocity_last_weeks'];
+    $tasksOpen = max((int) ($stats['tasks_total'] ?? 0) - (int) ($stats['tasks_done'] ?? 0), 0);
+    $topContributors = collect($memberWorkload)->sortByDesc('tasks_done')->take(5)->values();
+    $priorityColorMap = [
+        'low' => 'bg-emerald-500',
+        'medium' => 'bg-sky-500',
+        'high' => 'bg-amber-500',
+        'urgent' => 'bg-rose-500',
+    ];
 @endphp
 
 <x-app-layout>
@@ -68,6 +76,8 @@
             canCreateComment: @js($canCreateComment),
             canCreateMessage: @js($canCreateMessage),
             canManageFiles: @js($canManageFiles),
+            statusLabels: @js($statusLabels),
+            priorityLabels: @js($priorityLabels),
             csrfToken: @js(csrf_token()),
             snapshotVersion: @js($snapshotVersion),
             initialSnapshot: @js($liveSnapshot),
@@ -130,6 +140,29 @@
                 </article>
             </div>
 
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Taches totales</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_total">{{ $stats['tasks_total'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">ensemble du backlog du projet</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Taches ouvertes</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_open">{{ $tasksOpen }}</p>
+                    <p class="mt-1 text-sm text-slate-600">todo + doing actuellement</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Heures loggees</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="logged_hours">{{ $stats['logged_hours'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">timesheets consolidees</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Commentaires</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="comments_total">{{ $stats['comments_total'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">trace collaborative active</p>
+                </article>
+            </div>
+
             <div class="grid gap-5 lg:grid-cols-2">
                 <article class="client-panel p-5">
                     <h3 class="text-lg font-semibold text-slate-900">Repartition par statut</h3>
@@ -180,6 +213,104 @@
                     @endforeach
                 </div>
             </article>
+
+            <div class="grid gap-5 xl:grid-cols-2">
+                <article class="client-panel p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-900">Diagrammes de priorite</h3>
+                        <span class="text-xs text-slate-500">Vue risques taches</span>
+                    </div>
+                    <div id="overview-priority-stack" class="h-3 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        @php
+                            $priorityTotal = max((int) ($stats['tasks_total'] ?? 0), 1);
+                        @endphp
+                        @foreach ($priorityLabels as $priorityKey => $priorityLabel)
+                            @php
+                                $priorityValue = (int) ($priorityBreakdown[$priorityKey] ?? 0);
+                                $priorityPercent = $priorityValue > 0 ? max((int) round(($priorityValue / $priorityTotal) * 100), 3) : 0;
+                            @endphp
+                            @if ($priorityPercent > 0)
+                                <span class="inline-block h-full {{ $priorityColorMap[$priorityKey] ?? 'bg-slate-500' }}" style="width: {{ $priorityPercent }}%;"></span>
+                            @endif
+                        @endforeach
+                    </div>
+                    <div id="overview-priority-items" class="mt-4 grid gap-3 sm:grid-cols-2">
+                        @foreach ($priorityLabels as $priorityKey => $priorityLabel)
+                            @php
+                                $priorityValue = (int) ($priorityBreakdown[$priorityKey] ?? 0);
+                                $priorityPercent = $stats['tasks_total'] > 0
+                                    ? (int) round(($priorityValue / $stats['tasks_total']) * 100)
+                                    : 0;
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm text-slate-700">
+                                <p class="font-semibold text-slate-900">{{ $priorityLabel }}</p>
+                                <p class="mt-1 text-xs text-slate-500">{{ $priorityValue }} taches ({{ $priorityPercent }}%)</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-[var(--client-line)] bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Flux operationnel</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Todo: <strong data-live-flow="todo">{{ $statusBreakdown['todo'] ?? 0 }}</strong></span>
+                            <span class="text-slate-400">&gt;</span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Doing: <strong data-live-flow="doing">{{ $statusBreakdown['doing'] ?? 0 }}</strong></span>
+                            <span class="text-slate-400">&gt;</span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Done: <strong data-live-flow="done">{{ $statusBreakdown['done'] ?? 0 }}</strong></span>
+                            <span class="rounded-full bg-rose-100 px-2.5 py-1 text-rose-700">Overdue: <strong data-live-flow="overdue">{{ $stats['tasks_overdue'] ?? 0 }}</strong></span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="client-panel p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-900">Histogramme & contributeurs</h3>
+                        <span class="text-xs text-slate-500">Vue globale taches</span>
+                    </div>
+
+                    <div id="overview-velocity-chart" class="grid gap-2 sm:grid-cols-3">
+                        @php
+                            $velocityMax = max(1, (int) collect($velocity)->max('done'));
+                        @endphp
+                        @foreach ($velocity as $item)
+                            @php
+                                $velocityHeight = (int) round(((int) $item['done'] / $velocityMax) * 76);
+                                $velocityHeight = max($velocityHeight, (int) $item['done'] > 0 ? 8 : 4);
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-2 py-2 text-center">
+                                <p class="text-[11px] font-semibold text-slate-700">{{ $item['label'] }}</p>
+                                <div class="mt-2 flex h-20 items-end justify-center">
+                                    <span class="block w-5 rounded-md bg-gradient-to-t from-cyan-600 to-cyan-300" style="height: {{ $velocityHeight }}px;"></span>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">{{ $item['done'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div id="overview-member-contrib" class="mt-4 space-y-2">
+                        @php
+                            $memberMaxDone = max(1, (int) $topContributors->max('tasks_done'));
+                        @endphp
+                        @forelse ($topContributors as $member)
+                            @php
+                                $doneValue = (int) ($member['tasks_done'] ?? 0);
+                                $memberWidth = max((int) round(($doneValue / $memberMaxDone) * 100), $doneValue > 0 ? 6 : 0);
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2">
+                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-900">{{ $member['name'] }}</span>
+                                    <span>{{ $doneValue }} done</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                    <span class="block h-full rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-teal)]" style="width: {{ $memberWidth }}%;"></span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucune contribution membre disponible.</p>
+                        @endforelse
+                    </div>
+                </article>
+            </div>
         </section>
 
         <section id="timeline" x-show="tab === 'timeline'" class="space-y-4" x-cloak>
@@ -797,19 +928,165 @@
                     this.renderMessages(payload.recent_messages ?? []);
                     this.renderFiles(payload.files ?? []);
                     this.renderStats(payload.stats ?? {});
+                    this.renderOverviewDiagrams(
+                        payload.status_breakdown ?? {},
+                        payload.priority_breakdown ?? {},
+                        payload.velocity ?? [],
+                        payload.member_workload ?? [],
+                        payload.stats ?? {}
+                    );
                 },
                 renderStats(stats) {
                     const membersActive = Number(stats.members_active ?? 0);
+                    const tasksTotal = Number(stats.tasks_total ?? 0);
+                    const tasksDone = Number(stats.tasks_done ?? 0);
+                    const tasksOpen = Math.max(tasksTotal - tasksDone, 0);
 
                     this.setText('[data-live-stat="progress_rate"]', `${stats.progress_rate ?? 0}%`);
                     this.setText('[data-live-stat="members_active"]', String(membersActive));
                     this.setText('[data-live-stat="tasks_overdue"]', String(stats.tasks_overdue ?? 0));
                     this.setText('[data-live-stat="average_completion_hours"]', `${stats.average_completion_hours ?? 0}h`);
+                    this.setText('[data-live-stat="tasks_total"]', String(tasksTotal));
+                    this.setText('[data-live-stat="tasks_open"]', String(tasksOpen));
+                    this.setText('[data-live-stat="logged_hours"]', String(stats.logged_hours ?? 0));
+                    this.setText('[data-live-stat="comments_total"]', String(stats.comments_total ?? 0));
 
                     const membersLabel = document.querySelector('[data-live-members-active]');
                     if (membersLabel) {
                         membersLabel.textContent = `${membersActive} membres actifs`;
                     }
+                },
+                renderOverviewDiagrams(statusBreakdown, priorityBreakdown, velocity, memberWorkload, stats) {
+                    this.renderOverviewFlow(statusBreakdown, stats);
+                    this.renderOverviewPriority(priorityBreakdown, stats);
+                    this.renderOverviewVelocity(velocity);
+                    this.renderOverviewContributors(memberWorkload);
+                },
+                renderOverviewFlow(statusBreakdown, stats) {
+                    const todo = Number(statusBreakdown.todo ?? 0);
+                    const doing = Number(statusBreakdown.doing ?? 0);
+                    const done = Number(statusBreakdown.done ?? 0);
+                    const overdue = Number(stats.tasks_overdue ?? 0);
+
+                    this.setText('[data-live-flow="todo"]', String(todo));
+                    this.setText('[data-live-flow="doing"]', String(doing));
+                    this.setText('[data-live-flow="done"]', String(done));
+                    this.setText('[data-live-flow="overdue"]', String(overdue));
+                },
+                renderOverviewPriority(priorityBreakdown, stats) {
+                    const stack = document.getElementById('overview-priority-stack');
+                    const items = document.getElementById('overview-priority-items');
+                    if (!stack || !items) {
+                        return;
+                    }
+
+                    const order = [
+                        { key: 'low', color: 'bg-emerald-500', hex: '#10b981' },
+                        { key: 'medium', color: 'bg-sky-500', hex: '#0ea5e9' },
+                        { key: 'high', color: 'bg-amber-500', hex: '#f59e0b' },
+                        { key: 'urgent', color: 'bg-rose-500', hex: '#ef4444' },
+                    ];
+
+                    const total = Math.max(Number(stats.tasks_total ?? 0), 0);
+                    const rows = order.map((entry) => {
+                        const value = Number(priorityBreakdown[entry.key] ?? 0);
+                        const percent = total > 0 ? (value / total) * 100 : 0;
+                        const label = this.escapeHtml(config.priorityLabels?.[entry.key] ?? entry.key);
+
+                        return {
+                            ...entry,
+                            value,
+                            percent,
+                            label,
+                        };
+                    });
+
+                    if (total === 0) {
+                        stack.innerHTML = '<span class="block h-full w-full bg-slate-200"></span>';
+                    } else {
+                        stack.innerHTML = rows
+                            .filter((row) => row.value > 0)
+                            .map((row) => {
+                                const width = Math.max(Math.round(row.percent), 3);
+                                return `<span class="inline-block h-full ${row.color}" style="width:${width}%;"></span>`;
+                            })
+                            .join('');
+                    }
+
+                    items.innerHTML = rows.map((row) => {
+                        const percent = total > 0 ? Math.round(row.percent) : 0;
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm text-slate-700">
+                                <p class="font-semibold text-slate-900">${row.label}</p>
+                                <p class="mt-1 text-xs text-slate-500">${row.value} taches (${percent}%)</p>
+                            </div>
+                        `;
+                    }).join('');
+                },
+                renderOverviewVelocity(velocity) {
+                    const container = document.getElementById('overview-velocity-chart');
+                    if (!container) {
+                        return;
+                    }
+
+                    const points = Array.isArray(velocity) ? velocity : [];
+                    if (points.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500 sm:col-span-3">Aucune donnee de velocite.</p>';
+                        return;
+                    }
+
+                    const maxValue = Math.max(...points.map((point) => Number(point.done ?? 0)), 1);
+
+                    container.innerHTML = points.map((point) => {
+                        const value = Number(point.done ?? 0);
+                        const label = this.escapeHtml(point.label ?? '-');
+                        const height = value > 0 ? Math.max(Math.round((value / maxValue) * 76), 8) : 4;
+
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-2 py-2 text-center">
+                                <p class="text-[11px] font-semibold text-slate-700">${label}</p>
+                                <div class="mt-2 flex h-20 items-end justify-center">
+                                    <span class="block w-5 rounded-md bg-gradient-to-t from-cyan-600 to-cyan-300" style="height:${height}px;"></span>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">${value}</p>
+                            </div>
+                        `;
+                    }).join('');
+                },
+                renderOverviewContributors(memberWorkload) {
+                    const container = document.getElementById('overview-member-contrib');
+                    if (!container) {
+                        return;
+                    }
+
+                    const members = Array.isArray(memberWorkload) ? memberWorkload.slice() : [];
+                    if (members.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucune contribution membre disponible.</p>';
+                        return;
+                    }
+
+                    const topMembers = members
+                        .sort((a, b) => Number(b.tasks_done ?? 0) - Number(a.tasks_done ?? 0))
+                        .slice(0, 5);
+                    const maxDone = Math.max(...topMembers.map((member) => Number(member.tasks_done ?? 0)), 1);
+
+                    container.innerHTML = topMembers.map((member) => {
+                        const name = this.escapeHtml(member.name ?? 'Membre');
+                        const done = Number(member.tasks_done ?? 0);
+                        const width = done > 0 ? Math.max(Math.round((done / maxDone) * 100), 6) : 0;
+
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2">
+                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-900">${name}</span>
+                                    <span>${done} done</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                    <span class="block h-full rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-teal)]" style="width:${width}%;"></span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
                 },
                 renderStatusCounts(statusCounts, columns = {}) {
                     ['todo', 'doing', 'review', 'done'].forEach((status) => {

@@ -58,6 +58,15 @@ class UserResource extends Resource
                     ->preload()
                     ->searchable()
                     ->label('Permissions directes'),
+                Forms\Components\Toggle::make('notify_email')
+                    ->label('Notifications email')
+                    ->default(true),
+                Forms\Components\Toggle::make('notify_realtime')
+                    ->label('Notifications temps reel')
+                    ->default(true),
+                Forms\Components\Toggle::make('notify_push')
+                    ->label('Notifications push')
+                    ->default(true),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Compte actif')
                     ->default(true),
@@ -82,8 +91,10 @@ class UserResource extends Resource
                     ->formatStateUsing(fn (string $state): string => User::roleOptions()[$state] ?? $state)
                     ->color(fn (string $state): string => match ($state) {
                         User::ROLE_ADMIN => 'danger',
+                        User::ROLE_MANAGER => 'primary',
                         User::ROLE_PROJECT_MANAGER => 'warning',
                         User::ROLE_MEMBER => 'info',
+                        User::ROLE_CLIENT => 'gray',
                         default => 'gray',
                     }),
                 Tables\Columns\IconColumn::make('is_admin')

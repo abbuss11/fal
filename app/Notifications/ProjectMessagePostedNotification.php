@@ -5,7 +5,7 @@ namespace App\Notifications;
 use App\Models\Project;
 use App\Models\ProjectMessage;
 use App\Models\User;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 class ProjectMessagePostedNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     public function __construct(
         public readonly Project $project,
@@ -26,7 +26,7 @@ class ProjectMessagePostedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     public function toMail(object $notifiable): MailMessage

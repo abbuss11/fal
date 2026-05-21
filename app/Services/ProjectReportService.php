@@ -17,8 +17,11 @@ class ProjectReportService
     {
         $project->loadMissing([
             'owner',
+            'client',
             'members',
             'tasks.assignee',
+            'tasks.tags',
+            'tasks.dependencies',
             'timesheets.user',
         ]);
 
@@ -36,6 +39,12 @@ class ProjectReportService
             ->get();
 
         $commentsCount = $project->comments()->count();
+        $dependenciesCount = $tasks->sum(fn (Task $task): int => $task->dependencies->count());
+        $tagsUsed = $tasks
+            ->flatMap(fn (Task $task) => $task->tags->pluck('name'))
+            ->unique()
+            ->values()
+            ->all();
 
         $statusBreakdown = $this->statusBreakdown($tasks);
         $priorityBreakdown = $this->priorityBreakdown($tasks);
@@ -59,9 +68,13 @@ class ProjectReportService
                 'id' => $project->id,
                 'name' => $project->name,
                 'status' => $project->status,
+                'is_archived' => (bool) $project->is_archived,
+                'is_template' => (bool) $project->is_template,
+                'template_name' => $project->template_name,
                 'priority' => $project->priority,
                 'description' => $project->description,
                 'owner' => $project->owner?->name,
+                'client' => $project->client?->name,
                 'start_date' => $project->start_date?->toDateString(),
                 'due_date' => $project->due_date?->toDateString(),
             ],
@@ -77,11 +90,14 @@ class ProjectReportService
                 'progress_rate' => $progressRate,
                 'average_completion_hours' => $averageCompletionHours,
                 'logged_hours' => round((float) $timesheets->sum('hours'), 2),
+                'dependencies_total' => $dependenciesCount,
+                'tags_total' => count($tagsUsed),
             ],
             'status_breakdown' => $statusBreakdown,
             'priority_breakdown' => $priorityBreakdown,
             'member_workload' => $this->memberWorkload($project, $members, $tasks),
             'team_performance' => $this->teamPerformance($members, $tasks, $timesheets),
+            'tags_used' => $tagsUsed,
             'timeline' => $this->timeline($activityLogs),
             'velocity_last_weeks' => $velocityLastWeeks,
             'generated_at' => now()->toDateTimeString(),

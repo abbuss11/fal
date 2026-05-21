@@ -5,6 +5,14 @@
     $timeline = $overview['timeline'];
     $memberWorkload = $overview['member_workload'];
     $velocity = $overview['velocity_last_weeks'];
+    $tasksOpen = max((int) ($stats['tasks_total'] ?? 0) - (int) ($stats['tasks_done'] ?? 0), 0);
+    $topContributors = collect($memberWorkload)->sortByDesc('tasks_done')->take(5)->values();
+    $priorityColorMap = [
+        'low' => 'bg-emerald-500',
+        'medium' => 'bg-sky-500',
+        'high' => 'bg-amber-500',
+        'urgent' => 'bg-rose-500',
+    ];
 @endphp
 
 <x-app-layout>
@@ -16,6 +24,9 @@
                 <p class="mt-1 text-sm text-slate-500">
                     Chef de projet: {{ $project->owner?->name ?? 'Non defini' }} |
                     Statut: {{ \App\Models\Project::statusOptions()[$project->status] ?? strtoupper((string) $project->status) }}
+                    @if ($project->is_archived)
+                        | Archive
+                    @endif
                 </p>
                 @if ($project->objective)
                     <p class="mt-1 text-sm text-slate-600">Objectif: {{ $project->objective }}</p>
@@ -24,7 +35,27 @@
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('client.projects.index') }}" class="client-button-muted">Retour projets</a>
                 <a href="{{ route('client.tasks.index', ['project_id' => $project->id]) }}" class="client-button-muted">Tableau des taches</a>
+                @if ($canManageProject && auth()->user()?->hasPermission('projects.update'))
+                    <a href="{{ route('client.projects.edit', $project) }}" class="client-button-muted">Modifier projet</a>
+                @endif
                 <a href="{{ route('client.projects.report', $project) }}" class="client-button">Rapport complet</a>
+                @if ($canManageProject)
+                    <form method="POST" action="{{ route('client.projects.duplicate', $project) }}" class="inline">
+                        @csrf
+                        <button type="submit" class="client-button-muted">Dupliquer projet</button>
+                    </form>
+                    @if (! $project->is_archived)
+                        <form method="POST" action="{{ route('client.projects.archive', $project) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="client-button-muted">Archiver</button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('client.projects.unarchive', $project) }}" class="inline">
+                            @csrf
+                            <button type="submit" class="client-button-muted">Desarchiver</button>
+                        </form>
+                    @endif
+                @endif
             </div>
         </div>
     </x-slot>
@@ -35,6 +66,18 @@
             projectId: @js($project->id),
             snapshotUrl: @js(route('client.projects.snapshot', $project)),
             moveTaskUrlPrefix: @js(url('/client/projects/'.$project->id.'/tasks')),
+            taskUrlPrefix: @js(url('/client/tasks')),
+            messageUrlPrefix: @js(url('/client/projects/'.$project->id.'/messages')),
+            fileUrlPrefix: @js(url('/client/projects/'.$project->id.'/files')),
+            currentUserId: @js($currentUserId),
+            canManageProject: @js($canManageProject),
+            canUpdateTask: @js($canUpdateTask),
+            canDeleteTask: @js($canDeleteTask),
+            canCreateComment: @js($canCreateComment),
+            canCreateMessage: @js($canCreateMessage),
+            canManageFiles: @js($canManageFiles),
+            statusLabels: @js($statusLabels),
+            priorityLabels: @js($priorityLabels),
             csrfToken: @js(csrf_token()),
             snapshotVersion: @js($snapshotVersion),
             initialSnapshot: @js($liveSnapshot),
@@ -44,6 +87,17 @@
         @if (session('status'))
             <div class="client-panel border-l-4 border-l-emerald-500 p-4 text-sm text-emerald-700">
                 {{ session('status') }}
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="client-panel border-l-4 border-l-rose-500 p-4 text-sm text-rose-700">
+                <p class="font-semibold">Certaines actions ont echoue:</p>
+                <ul class="mt-2 list-disc space-y-1 pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -77,12 +131,35 @@
                 <article class="client-stat">
                     <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Retards</p>
                     <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_overdue">{{ $stats['tasks_overdue'] }}</p>
-                    <p class="mt-1 text-sm text-orange-700">taches en depassement</p>
+                    <p class="mt-1 text-sm text-cyan-700">taches en depassement</p>
                 </article>
                 <article class="client-stat">
                     <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Cycle moyen</p>
                     <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="average_completion_hours">{{ $stats['average_completion_hours'] }}h</p>
                     <p class="mt-1 text-sm text-slate-600">delai moyen d'achevement</p>
+                </article>
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Taches totales</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_total">{{ $stats['tasks_total'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">ensemble du backlog du projet</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Taches ouvertes</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="tasks_open">{{ $tasksOpen }}</p>
+                    <p class="mt-1 text-sm text-slate-600">todo + doing actuellement</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Heures loggees</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="logged_hours">{{ $stats['logged_hours'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">timesheets consolidees</p>
+                </article>
+                <article class="client-stat">
+                    <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Commentaires</p>
+                    <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-stat="comments_total">{{ $stats['comments_total'] }}</p>
+                    <p class="mt-1 text-sm text-slate-600">trace collaborative active</p>
                 </article>
             </div>
 
@@ -136,6 +213,104 @@
                     @endforeach
                 </div>
             </article>
+
+            <div class="grid gap-5 xl:grid-cols-2">
+                <article class="client-panel p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-900">Diagrammes de priorite</h3>
+                        <span class="text-xs text-slate-500">Vue risques taches</span>
+                    </div>
+                    <div id="overview-priority-stack" class="h-3 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        @php
+                            $priorityTotal = max((int) ($stats['tasks_total'] ?? 0), 1);
+                        @endphp
+                        @foreach ($priorityLabels as $priorityKey => $priorityLabel)
+                            @php
+                                $priorityValue = (int) ($priorityBreakdown[$priorityKey] ?? 0);
+                                $priorityPercent = $priorityValue > 0 ? max((int) round(($priorityValue / $priorityTotal) * 100), 3) : 0;
+                            @endphp
+                            @if ($priorityPercent > 0)
+                                <span class="inline-block h-full {{ $priorityColorMap[$priorityKey] ?? 'bg-slate-500' }}" style="width: {{ $priorityPercent }}%;"></span>
+                            @endif
+                        @endforeach
+                    </div>
+                    <div id="overview-priority-items" class="mt-4 grid gap-3 sm:grid-cols-2">
+                        @foreach ($priorityLabels as $priorityKey => $priorityLabel)
+                            @php
+                                $priorityValue = (int) ($priorityBreakdown[$priorityKey] ?? 0);
+                                $priorityPercent = $stats['tasks_total'] > 0
+                                    ? (int) round(($priorityValue / $stats['tasks_total']) * 100)
+                                    : 0;
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm text-slate-700">
+                                <p class="font-semibold text-slate-900">{{ $priorityLabel }}</p>
+                                <p class="mt-1 text-xs text-slate-500">{{ $priorityValue }} taches ({{ $priorityPercent }}%)</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mt-5 rounded-xl border border-[var(--client-line)] bg-white p-3">
+                        <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Flux operationnel</p>
+                        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Todo: <strong data-live-flow="todo">{{ $statusBreakdown['todo'] ?? 0 }}</strong></span>
+                            <span class="text-slate-400">&gt;</span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Doing: <strong data-live-flow="doing">{{ $statusBreakdown['doing'] ?? 0 }}</strong></span>
+                            <span class="text-slate-400">&gt;</span>
+                            <span class="rounded-full bg-slate-100 px-2.5 py-1">Done: <strong data-live-flow="done">{{ $statusBreakdown['done'] ?? 0 }}</strong></span>
+                            <span class="rounded-full bg-rose-100 px-2.5 py-1 text-rose-700">Overdue: <strong data-live-flow="overdue">{{ $stats['tasks_overdue'] ?? 0 }}</strong></span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="client-panel p-5">
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-slate-900">Histogramme & contributeurs</h3>
+                        <span class="text-xs text-slate-500">Vue globale taches</span>
+                    </div>
+
+                    <div id="overview-velocity-chart" class="grid gap-2 sm:grid-cols-3">
+                        @php
+                            $velocityMax = max(1, (int) collect($velocity)->max('done'));
+                        @endphp
+                        @foreach ($velocity as $item)
+                            @php
+                                $velocityHeight = (int) round(((int) $item['done'] / $velocityMax) * 76);
+                                $velocityHeight = max($velocityHeight, (int) $item['done'] > 0 ? 8 : 4);
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-2 py-2 text-center">
+                                <p class="text-[11px] font-semibold text-slate-700">{{ $item['label'] }}</p>
+                                <div class="mt-2 flex h-20 items-end justify-center">
+                                    <span class="block w-5 rounded-md bg-gradient-to-t from-cyan-600 to-cyan-300" style="height: {{ $velocityHeight }}px;"></span>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">{{ $item['done'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div id="overview-member-contrib" class="mt-4 space-y-2">
+                        @php
+                            $memberMaxDone = max(1, (int) $topContributors->max('tasks_done'));
+                        @endphp
+                        @forelse ($topContributors as $member)
+                            @php
+                                $doneValue = (int) ($member['tasks_done'] ?? 0);
+                                $memberWidth = max((int) round(($doneValue / $memberMaxDone) * 100), $doneValue > 0 ? 6 : 0);
+                            @endphp
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2">
+                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-900">{{ $member['name'] }}</span>
+                                    <span>{{ $doneValue }} done</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                    <span class="block h-full rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-teal)]" style="width: {{ $memberWidth }}%;"></span>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucune contribution membre disponible.</p>
+                        @endforelse
+                    </div>
+                </article>
+            </div>
         </section>
 
         <section id="timeline" x-show="tab === 'timeline'" class="space-y-4" x-cloak>
@@ -165,183 +340,135 @@
 
         <section id="board" x-show="tab === 'board'" class="space-y-4" x-cloak>
             <div class="jira-board-shell">
-                <aside class="jira-rail">
-                    <button type="button" class="jira-rail-icon jira-rail-icon-active" aria-label="Board">
-                        <span>J</span>
-                    </button>
-                    <button type="button" class="jira-rail-icon" aria-label="Recent">
-                        <span>R</span>
-                    </button>
-                    <button type="button" class="jira-rail-icon" aria-label="Apps">
-                        <span>A</span>
-                    </button>
-                    <div class="mt-auto space-y-2">
-                        <button type="button" class="jira-rail-icon" aria-label="Team">
-                            <span>T</span>
-                        </button>
-                        <button type="button" class="jira-rail-icon" aria-label="Settings">
-                            <span>S</span>
-                        </button>
-                    </div>
-                </aside>
-
-                <aside class="jira-workspace-sidebar">
-                    <div class="jira-brand">
-                        <p class="jira-brand-title">Spaces</p>
-                        <h3>Draco</h3>
-                    </div>
-
-                    <nav class="jira-side-nav">
-                        <a href="javascript:void(0)" class="jira-side-link">For you</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Recent</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Starred</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Apps</a>
-                        <a href="javascript:void(0)" class="jira-side-link">Plans</a>
-                    </nav>
-
-                    <div class="jira-side-block">
-                        <p class="jira-side-block-title">Recent</p>
-                        <a href="javascript:void(0)" class="jira-project-link jira-project-link-active">
-                            <span class="jira-project-dot"></span>
-                            <span>{{ $project->name }}</span>
-                        </a>
-                    </div>
-
-                    <div class="jira-side-note">
-                        <p>Mode <span data-board-mode-label>Kanban</span></p>
-                        <p class="mt-1">Glisse une tache pour changer de colonne ou de position.</p>
-                    </div>
-                </aside>
-
-                <div class="jira-workspace-main">
-                    <header class="jira-topbar">
-                        <label class="jira-search-wrap" for="jira-global-search">
-                            <span class="jira-search-lens">Q</span>
-                            <input id="jira-global-search" class="jira-search" type="text" placeholder="Search">
-                        </label>
-
-                        <div class="flex flex-wrap items-center gap-2">
-                            <a href="{{ route('client.tasks.index', ['project_id' => $project->id]) }}" class="jira-pill-btn-primary">Create</a>
-                            <button type="button" class="jira-pill-btn" :class="boardMode === 'kanban' ? 'jira-pill-active' : ''" @click="setBoardMode('kanban')">Kanban</button>
-                            <button type="button" class="jira-pill-btn" :class="boardMode === 'scrum' ? 'jira-pill-active' : ''" @click="setBoardMode('scrum')">Scrum</button>
-                        </div>
-                    </header>
-
-                    <section class="jira-project-header">
-                        <p class="jira-project-meta">Spaces</p>
-                        <div class="jira-project-title-row">
+                <header class="jira-board-header">
+                    <div>
+                        <p class="jira-board-kicker">Tableau projet</p>
+                        <div class="jira-board-title-row">
                             <h2>{{ $project->name }}</h2>
                             <span class="jira-project-code">SCRUM-{{ $project->id }}</span>
                         </div>
-                        <nav class="jira-project-tabs">
-                            <a href="javascript:void(0)" class="jira-project-tab">Summary</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Backlog</a>
-                            <a href="javascript:void(0)" class="jira-project-tab jira-project-tab-active">Board</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Code</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Timeline</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Docs</a>
-                            <a href="javascript:void(0)" class="jira-project-tab">Development</a>
-                        </nav>
-                    </section>
-
-                    <article class="jira-toolbar">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <label class="jira-board-search-wrap" for="jira-board-search">
-                                <span class="jira-search-lens">Q</span>
-                                <input
-                                    id="jira-board-search"
-                                    type="text"
-                                    class="jira-board-search"
-                                    placeholder="Search board"
-                                    x-model="boardQuery"
-                                    @input.debounce.150ms="applyBoardFilter()"
-                                >
-                            </label>
-                            <span class="jira-chip">Board</span>
-                            <span class="jira-chip">Live</span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" class="jira-pill-btn-primary">Complete sprint</button>
-                            <button type="button" class="jira-pill-btn">Group</button>
-                            <button type="button" class="jira-pill-btn">Filter</button>
-                            <button type="button" class="jira-pill-btn">Display</button>
-                        </div>
-                    </article>
-
-                    <article class="jira-sprint-metrics" x-show="boardMode === 'scrum'" x-cloak>
-                        <div class="jira-metric-card">
-                            <p>Backlog produit</p>
-                            <p data-scrum-metric="backlog">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>Sprint en cours</p>
-                            <p data-scrum-metric="sprint">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>En revue</p>
-                            <p data-scrum-metric="review">0</p>
-                        </div>
-                        <div class="jira-metric-card">
-                            <p>Terminees</p>
-                            <p data-scrum-metric="done">0</p>
-                        </div>
-                    </article>
-
-                    <div class="jira-board-grid">
-                        @foreach ($statusOrder as $status)
-                            @php
-                                $scrumLabel = match ($status) {
-                                    \App\Models\Task::STATUS_TODO => 'A FAIRE',
-                                    \App\Models\Task::STATUS_DOING => 'EN COURS',
-                                    'review' => 'EN COURS DE REVUE',
-                                    \App\Models\Task::STATUS_DONE => 'TERMINE',
-                                    default => strtoupper($status),
-                                };
-                            @endphp
-                            <article class="jira-column">
-                                <header class="jira-column-header">
-                                    <h3
-                                        data-board-title="{{ $status }}"
-                                        data-kanban-label="{{ $boardStatusLabels[$status] ?? strtoupper($status) }}"
-                                        data-scrum-label="{{ $scrumLabel }}"
-                                    >
-                                        {{ $boardStatusLabels[$status] ?? strtoupper($status) }}
-                                    </h3>
-                                    <span class="jira-count board-count" data-status-count="{{ $status }}">
-                                        {{ count($tasksByStatus[$status] ?? []) }}
-                                    </span>
-                                </header>
-
-                                <div class="space-y-3 board-column jira-column-body" data-board-column="{{ $status }}">
-                                    @forelse ($tasksByStatus[$status] ?? [] as $task)
-                                        @php
-                                            $assigneeName = $task->assignee?->name ?? 'Non assigne';
-                                            $assigneeInitial = strtoupper(substr($assigneeName, 0, 1));
-                                            $doneSubtasks = $task->subtasks->where('is_completed', true)->count();
-                                            $totalSubtasks = $task->subtasks->count();
-                                        @endphp
-                                        <article
-                                            class="board-card jira-task-card"
-                                            draggable="true"
-                                            data-task-id="{{ $task->id }}"
-                                            data-task-title="{{ $task->title }}"
-                                        >
-                                            <p class="jira-task-title">{{ $task->title }}</p>
-                                            <p class="jira-task-date">{{ $task->due_date?->format('M d, Y') ?? 'Aucune date' }}</p>
-                                            <p class="jira-task-key">SCRUM-{{ $task->id }}</p>
-                                            <div class="jira-task-meta">
-                                                <span>{{ $priorityLabels[$task->priority] ?? ucfirst((string) $task->priority) }}</span>
-                                                <span class="jira-task-avatar" title="{{ $assigneeName }}">{{ $assigneeInitial }}</span>
-                                            </div>
-                                            <p class="jira-task-subtasks">Sous-taches: {{ $doneSubtasks }}/{{ $totalSubtasks }}</p>
-                                        </article>
-                                    @empty
-                                        <p class="jira-empty-col">Aucune tache</p>
-                                    @endforelse
-                                </div>
-                            </article>
-                        @endforeach
+                        <p class="jira-board-note">
+                            Mode <span data-board-mode-label>Kanban</span> |
+                            Glisse une tache pour changer de colonne ou de position.
+                        </p>
                     </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        @if (auth()->user()?->hasPermission('tasks.create'))
+                            <a href="{{ route('client.tasks.create', ['project_id' => $project->id]) }}" class="jira-pill-btn-primary">Nouvelle tache</a>
+                        @endif
+                        <button type="button" class="jira-pill-btn" :class="boardMode === 'kanban' ? 'jira-pill-active' : ''" @click="setBoardMode('kanban')">Kanban</button>
+                        <button type="button" class="jira-pill-btn" :class="boardMode === 'scrum' ? 'jira-pill-active' : ''" @click="setBoardMode('scrum')">Scrum</button>
+                    </div>
+                </header>
+
+                <article class="jira-toolbar">
+                    <label class="jira-board-search-wrap" for="jira-board-search">
+                        <span class="jira-search-lens">Q</span>
+                        <input
+                            id="jira-board-search"
+                            type="text"
+                            class="jira-board-search"
+                            placeholder="Rechercher une tache, un numero ou un assigne"
+                            x-model="boardQuery"
+                            @input.debounce.150ms="applyBoardFilter()"
+                        >
+                    </label>
+                    <div class="jira-toolbar-counts">
+                        <span class="jira-chip">A faire: <strong data-status-inline-count="todo">{{ count($tasksByStatus['todo'] ?? []) }}</strong></span>
+                        <span class="jira-chip">En cours: <strong data-status-inline-count="doing">{{ count($tasksByStatus['doing'] ?? []) }}</strong></span>
+                        <span class="jira-chip">Revue: <strong data-status-inline-count="review">{{ count($tasksByStatus['review'] ?? []) }}</strong></span>
+                        <span class="jira-chip">Terminees: <strong data-status-inline-count="done">{{ count($tasksByStatus['done'] ?? []) }}</strong></span>
+                    </div>
+                </article>
+
+                <article class="jira-sprint-metrics" x-show="boardMode === 'scrum'" x-cloak>
+                    <div class="jira-metric-card">
+                        <p>Backlog produit</p>
+                        <p data-scrum-metric="backlog">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>Sprint en cours</p>
+                        <p data-scrum-metric="sprint">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>En revue</p>
+                        <p data-scrum-metric="review">0</p>
+                    </div>
+                    <div class="jira-metric-card">
+                        <p>Terminees</p>
+                        <p data-scrum-metric="done">0</p>
+                    </div>
+                </article>
+
+                <div class="jira-board-grid">
+                    @foreach ($statusOrder as $status)
+                        @php
+                            $scrumLabel = match ($status) {
+                                \App\Models\Task::STATUS_TODO => 'A FAIRE',
+                                \App\Models\Task::STATUS_DOING => 'EN COURS',
+                                'review' => 'EN COURS DE REVUE',
+                                \App\Models\Task::STATUS_DONE => 'TERMINE',
+                                default => strtoupper($status),
+                            };
+                        @endphp
+                        <article class="jira-column">
+                            <header class="jira-column-header">
+                                <h3
+                                    data-board-title="{{ $status }}"
+                                    data-kanban-label="{{ $boardStatusLabels[$status] ?? strtoupper($status) }}"
+                                    data-scrum-label="{{ $scrumLabel }}"
+                                >
+                                    {{ $boardStatusLabels[$status] ?? strtoupper($status) }}
+                                </h3>
+                                <span class="jira-count board-count" data-status-count="{{ $status }}">
+                                    {{ count($tasksByStatus[$status] ?? []) }}
+                                </span>
+                            </header>
+
+                            <div class="space-y-3 board-column jira-column-body" data-board-column="{{ $status }}">
+                                @forelse ($tasksByStatus[$status] ?? [] as $task)
+                                    @php
+                                        $assigneeName = $task->assignee?->name ?? 'Non assigne';
+                                        $assigneeInitial = strtoupper(substr($assigneeName, 0, 1));
+                                    @endphp
+                                    <article
+                                        class="board-card jira-task-card"
+                                        draggable="true"
+                                        data-task-id="{{ $task->id }}"
+                                        data-task-title="{{ $task->title }}"
+                                        data-task-key="SCRUM-{{ $task->id }}"
+                                        data-task-assignee="{{ $assigneeName }}"
+                                    >
+                                        <p class="jira-task-title">{{ $task->title }}</p>
+                                        <div class="jira-task-meta">
+                                            <span class="jira-task-date">{{ $task->due_date?->format('M d, Y') ?? 'Aucune date' }}</span>
+                                            <span>{{ $priorityLabels[$task->priority] ?? ucfirst((string) $task->priority) }}</span>
+                                        </div>
+                                        <div class="jira-task-meta">
+                                            <span class="jira-task-key">SCRUM-{{ $task->id }}</span>
+                                            <span class="jira-task-avatar" title="{{ $assigneeName }}">{{ $assigneeInitial }}</span>
+                                        </div>
+                                        @if ($canUpdateTask || $canDeleteTask)
+                                            <div class="jira-task-meta">
+                                                @if ($canUpdateTask)
+                                                    <a href="{{ route('client.tasks.edit', $task) }}" class="text-[11px] font-semibold text-[var(--client-accent)] hover:text-cyan-700">Modifier</a>
+                                                @endif
+                                                @if ($canDeleteTask)
+                                                    <form method="POST" action="{{ route('client.tasks.destroy', $task) }}" onsubmit="return confirm('Supprimer cette tache ?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">Supprimer</button>
+                                                    </form>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </article>
+                                @empty
+                                    <p class="jira-empty-col">Aucune tache</p>
+                                @endforelse
+                            </div>
+                        </article>
+                    @endforeach
                 </div>
             </div>
         </section>
@@ -461,30 +588,36 @@
                 @php
                     $firstTaskForComment = $tasks->first();
                 @endphp
-                <form
-                    method="POST"
-                    action="{{ $firstTaskForComment ? route('client.tasks.comments.store', $firstTaskForComment) : '#' }}"
-                    id="comment-form"
-                    class="mt-4 space-y-3"
-                >
-                    @csrf
-                    <div>
-                        <label for="comment-task-id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tache</label>
-                        <select id="comment-task-id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)>
-                            <option value="">Selectionner une tache</option>
-                            @foreach ($tasks as $taskOption)
-                                <option value="{{ $taskOption->id }}" data-action="{{ route('client.tasks.comments.store', $taskOption) }}">
-                                    {{ $taskOption->title }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label for="comment-body" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Commentaire</label>
-                        <textarea id="comment-body" name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)></textarea>
-                    </div>
-                    <button type="submit" class="client-button" @disabled(! $firstTaskForComment)>Publier un avis</button>
-                </form>
+                @if ($canCreateComment)
+                    <form
+                        method="POST"
+                        action="{{ $firstTaskForComment ? route('client.tasks.comments.store', $firstTaskForComment) : '#' }}"
+                        id="comment-form"
+                        class="mt-4 space-y-3"
+                    >
+                        @csrf
+                        <div>
+                            <label for="comment-task-id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Tache</label>
+                            <select id="comment-task-id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)>
+                                <option value="">Selectionner une tache</option>
+                                @foreach ($tasks as $taskOption)
+                                    <option value="{{ $taskOption->id }}" data-action="{{ route('client.tasks.comments.store', $taskOption) }}">
+                                        {{ $taskOption->title }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label for="comment-body" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Commentaire</label>
+                            <textarea id="comment-body" name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required @disabled(! $firstTaskForComment)></textarea>
+                        </div>
+                        <button type="submit" class="client-button" @disabled(! $firstTaskForComment)>Publier un avis</button>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule aux commentaires.
+                    </p>
+                @endif
 
                 <div class="mt-6 space-y-3">
                     <div id="comments-list">
@@ -495,6 +628,27 @@
                                 <span class="text-xs text-slate-500">{{ $comment->created_at?->format('d/m/Y H:i') }}</span>
                             </div>
                             <p class="mt-2 text-sm text-slate-600">{{ $comment->body }}</p>
+                            @php
+                                $canManageComment = $canCreateComment && ($canManageProject || (int) $comment->user_id === (int) $currentUserId);
+                            @endphp
+                            @if ($canManageComment)
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="{{ route('client.tasks.comments.update', [$comment->task_id, $comment]) }}" class="space-y-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>{{ $comment->body }}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('client.tasks.comments.destroy', [$comment->task_id, $comment]) }}" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            @endif
                         </div>
                     @empty
                         <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucun commentaire.</p>
@@ -547,11 +701,17 @@
                 <h3 class="text-lg font-semibold text-slate-900">Chat interne</h3>
                 <p class="mt-1 text-xs text-slate-500">Mentions supportees: utilisez <code>@prenomnom</code> ou <code>@email</code>.</p>
 
-                <form method="POST" action="{{ route('client.projects.messages.store', $project) }}" class="mt-4 space-y-3">
-                    @csrf
-                    <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="Ecrire un message a l'equipe..." required></textarea>
-                    <button type="submit" class="client-button">Envoyer</button>
-                </form>
+                @if ($canCreateMessage)
+                    <form method="POST" action="{{ route('client.projects.messages.store', $project) }}" class="mt-4 space-y-3">
+                        @csrf
+                        <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="Ecrire un message a l'equipe..." required></textarea>
+                        <button type="submit" class="client-button">Envoyer</button>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule au chat interne.
+                    </p>
+                @endif
 
                 <div id="messages-list" class="mt-5 space-y-3">
                     @forelse ($recentMessages as $message)
@@ -561,6 +721,27 @@
                                 <span class="text-xs text-slate-500">{{ $message->created_at?->format('d/m/Y H:i') }}</span>
                             </div>
                             <p class="mt-2 text-sm text-slate-600">{{ $message->body }}</p>
+                            @php
+                                $canManageMessage = $canCreateMessage && ($canManageProject || (int) $message->user_id === (int) $currentUserId);
+                            @endphp
+                            @if ($canManageMessage)
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="{{ route('client.projects.messages.update', [$project, $message]) }}" class="space-y-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>{{ $message->body }}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('client.projects.messages.destroy', [$project, $message]) }}" onsubmit="return confirm('Supprimer ce message ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            @endif
                         </div>
                     @empty
                         <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucun message interne.</p>
@@ -574,31 +755,52 @@
                 <h3 class="text-lg font-semibold text-slate-900">Partage de fichiers</h3>
                 <p class="mt-1 text-xs text-slate-500">Versioning automatique actif: chaque upload du meme fichier incremente sa version.</p>
 
-                <form method="POST" action="{{ route('client.projects.files.store', $project) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-3">
-                    @csrf
-                    <div class="md:col-span-2">
-                        <label for="file-upload" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Fichier</label>
-                        <input id="file-upload" type="file" name="file" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>
-                    </div>
-                    <div>
-                        <label for="logical_name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nom logique</label>
-                        <input id="logical_name" name="logical_name" type="text" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="spec_api">
-                    </div>
-                    <div>
-                        <label for="file_task_id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">ID tache (optionnel)</label>
-                        <input id="file_task_id" type="number" name="task_id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm">
-                    </div>
-                    <div class="md:col-span-3">
-                        <button type="submit" class="client-button">Uploader</button>
-                    </div>
-                </form>
+                @if ($canManageFiles)
+                    <form method="POST" action="{{ route('client.projects.files.store', $project) }}" enctype="multipart/form-data" class="mt-4 grid gap-3 md:grid-cols-3">
+                        @csrf
+                        <div class="md:col-span-2">
+                            <label for="file-upload" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Fichier</label>
+                            <input id="file-upload" type="file" name="file" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>
+                            <p class="mt-1 text-xs text-slate-500">Taille max: 20 MB. Le nom original est conserve.</p>
+                        </div>
+                        <div>
+                            <label for="logical_name" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nom logique</label>
+                            <input id="logical_name" name="logical_name" type="text" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" placeholder="spec_api">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="file_task_id" class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">Lier a une tache (optionnel)</label>
+                            <select id="file_task_id" name="task_id" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm">
+                                <option value="">Aucune</option>
+                                @foreach ($tasks as $taskOption)
+                                    <option value="{{ $taskOption->id }}">{{ $taskOption->title }} (#{{ $taskOption->id }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="md:col-span-3">
+                            <button type="submit" class="client-button">Uploader</button>
+                        </div>
+                    </form>
+                @else
+                    <p class="mt-4 rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">
+                        Vous avez un acces en lecture seule aux fichiers.
+                    </p>
+                @endif
 
                 <div id="files-list" class="mt-5 space-y-3">
                     @forelse ($projectFiles as $file)
                         <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 <p class="text-sm font-semibold text-slate-900">{{ $file->original_name }} (v{{ $file->version }})</p>
-                                <a href="{{ route('client.projects.files.download', [$project, $file]) }}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ route('client.projects.files.download', [$project, $file]) }}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                    @if ($canManageFiles && ($canManageProject || (int) $file->uploaded_by === (int) $currentUserId))
+                                        <form method="POST" action="{{ route('client.projects.files.destroy', [$project, $file]) }}" onsubmit="return confirm('Supprimer ce fichier ?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
                             <p class="mt-1 text-xs text-slate-500">
                                 Par {{ $file->uploader?->name ?? 'Systeme' }} | {{ number_format(($file->size ?? 0) / 1024, 1) }} KB | {{ $file->created_at?->format('d/m/Y H:i') }}
@@ -726,19 +928,165 @@
                     this.renderMessages(payload.recent_messages ?? []);
                     this.renderFiles(payload.files ?? []);
                     this.renderStats(payload.stats ?? {});
+                    this.renderOverviewDiagrams(
+                        payload.status_breakdown ?? {},
+                        payload.priority_breakdown ?? {},
+                        payload.velocity ?? [],
+                        payload.member_workload ?? [],
+                        payload.stats ?? {}
+                    );
                 },
                 renderStats(stats) {
                     const membersActive = Number(stats.members_active ?? 0);
+                    const tasksTotal = Number(stats.tasks_total ?? 0);
+                    const tasksDone = Number(stats.tasks_done ?? 0);
+                    const tasksOpen = Math.max(tasksTotal - tasksDone, 0);
 
                     this.setText('[data-live-stat="progress_rate"]', `${stats.progress_rate ?? 0}%`);
                     this.setText('[data-live-stat="members_active"]', String(membersActive));
                     this.setText('[data-live-stat="tasks_overdue"]', String(stats.tasks_overdue ?? 0));
                     this.setText('[data-live-stat="average_completion_hours"]', `${stats.average_completion_hours ?? 0}h`);
+                    this.setText('[data-live-stat="tasks_total"]', String(tasksTotal));
+                    this.setText('[data-live-stat="tasks_open"]', String(tasksOpen));
+                    this.setText('[data-live-stat="logged_hours"]', String(stats.logged_hours ?? 0));
+                    this.setText('[data-live-stat="comments_total"]', String(stats.comments_total ?? 0));
 
                     const membersLabel = document.querySelector('[data-live-members-active]');
                     if (membersLabel) {
                         membersLabel.textContent = `${membersActive} membres actifs`;
                     }
+                },
+                renderOverviewDiagrams(statusBreakdown, priorityBreakdown, velocity, memberWorkload, stats) {
+                    this.renderOverviewFlow(statusBreakdown, stats);
+                    this.renderOverviewPriority(priorityBreakdown, stats);
+                    this.renderOverviewVelocity(velocity);
+                    this.renderOverviewContributors(memberWorkload);
+                },
+                renderOverviewFlow(statusBreakdown, stats) {
+                    const todo = Number(statusBreakdown.todo ?? 0);
+                    const doing = Number(statusBreakdown.doing ?? 0);
+                    const done = Number(statusBreakdown.done ?? 0);
+                    const overdue = Number(stats.tasks_overdue ?? 0);
+
+                    this.setText('[data-live-flow="todo"]', String(todo));
+                    this.setText('[data-live-flow="doing"]', String(doing));
+                    this.setText('[data-live-flow="done"]', String(done));
+                    this.setText('[data-live-flow="overdue"]', String(overdue));
+                },
+                renderOverviewPriority(priorityBreakdown, stats) {
+                    const stack = document.getElementById('overview-priority-stack');
+                    const items = document.getElementById('overview-priority-items');
+                    if (!stack || !items) {
+                        return;
+                    }
+
+                    const order = [
+                        { key: 'low', color: 'bg-emerald-500', hex: '#10b981' },
+                        { key: 'medium', color: 'bg-sky-500', hex: '#0ea5e9' },
+                        { key: 'high', color: 'bg-amber-500', hex: '#f59e0b' },
+                        { key: 'urgent', color: 'bg-rose-500', hex: '#ef4444' },
+                    ];
+
+                    const total = Math.max(Number(stats.tasks_total ?? 0), 0);
+                    const rows = order.map((entry) => {
+                        const value = Number(priorityBreakdown[entry.key] ?? 0);
+                        const percent = total > 0 ? (value / total) * 100 : 0;
+                        const label = this.escapeHtml(config.priorityLabels?.[entry.key] ?? entry.key);
+
+                        return {
+                            ...entry,
+                            value,
+                            percent,
+                            label,
+                        };
+                    });
+
+                    if (total === 0) {
+                        stack.innerHTML = '<span class="block h-full w-full bg-slate-200"></span>';
+                    } else {
+                        stack.innerHTML = rows
+                            .filter((row) => row.value > 0)
+                            .map((row) => {
+                                const width = Math.max(Math.round(row.percent), 3);
+                                return `<span class="inline-block h-full ${row.color}" style="width:${width}%;"></span>`;
+                            })
+                            .join('');
+                    }
+
+                    items.innerHTML = rows.map((row) => {
+                        const percent = total > 0 ? Math.round(row.percent) : 0;
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm text-slate-700">
+                                <p class="font-semibold text-slate-900">${row.label}</p>
+                                <p class="mt-1 text-xs text-slate-500">${row.value} taches (${percent}%)</p>
+                            </div>
+                        `;
+                    }).join('');
+                },
+                renderOverviewVelocity(velocity) {
+                    const container = document.getElementById('overview-velocity-chart');
+                    if (!container) {
+                        return;
+                    }
+
+                    const points = Array.isArray(velocity) ? velocity : [];
+                    if (points.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500 sm:col-span-3">Aucune donnee de velocite.</p>';
+                        return;
+                    }
+
+                    const maxValue = Math.max(...points.map((point) => Number(point.done ?? 0)), 1);
+
+                    container.innerHTML = points.map((point) => {
+                        const value = Number(point.done ?? 0);
+                        const label = this.escapeHtml(point.label ?? '-');
+                        const height = value > 0 ? Math.max(Math.round((value / maxValue) * 76), 8) : 4;
+
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-2 py-2 text-center">
+                                <p class="text-[11px] font-semibold text-slate-700">${label}</p>
+                                <div class="mt-2 flex h-20 items-end justify-center">
+                                    <span class="block w-5 rounded-md bg-gradient-to-t from-cyan-600 to-cyan-300" style="height:${height}px;"></span>
+                                </div>
+                                <p class="mt-1 text-xs text-slate-500">${value}</p>
+                            </div>
+                        `;
+                    }).join('');
+                },
+                renderOverviewContributors(memberWorkload) {
+                    const container = document.getElementById('overview-member-contrib');
+                    if (!container) {
+                        return;
+                    }
+
+                    const members = Array.isArray(memberWorkload) ? memberWorkload.slice() : [];
+                    if (members.length === 0) {
+                        container.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-4 text-sm text-slate-500">Aucune contribution membre disponible.</p>';
+                        return;
+                    }
+
+                    const topMembers = members
+                        .sort((a, b) => Number(b.tasks_done ?? 0) - Number(a.tasks_done ?? 0))
+                        .slice(0, 5);
+                    const maxDone = Math.max(...topMembers.map((member) => Number(member.tasks_done ?? 0)), 1);
+
+                    container.innerHTML = topMembers.map((member) => {
+                        const name = this.escapeHtml(member.name ?? 'Membre');
+                        const done = Number(member.tasks_done ?? 0);
+                        const width = done > 0 ? Math.max(Math.round((done / maxDone) * 100), 6) : 0;
+
+                        return `
+                            <div class="rounded-xl border border-[var(--client-line)] bg-white px-3 py-2">
+                                <div class="flex items-center justify-between text-xs text-slate-600">
+                                    <span class="font-semibold text-slate-900">${name}</span>
+                                    <span>${done} done</span>
+                                </div>
+                                <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                                    <span class="block h-full rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-teal)]" style="width:${width}%;"></span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
                 },
                 renderStatusCounts(statusCounts, columns = {}) {
                     ['todo', 'doing', 'review', 'done'].forEach((status) => {
@@ -748,6 +1096,11 @@
                         const badge = document.querySelector(`[data-status-count="${status}"]`);
                         if (badge) {
                             badge.textContent = String(count);
+                        }
+
+                        const inlineCount = document.querySelector(`[data-status-inline-count="${status}"]`);
+                        if (inlineCount) {
+                            inlineCount.textContent = String(count);
                         }
                     });
 
@@ -789,8 +1142,23 @@
                     const assigneeInitial = this.escapeHtml((String(task.assignee ?? '?').trim().charAt(0) || '?').toUpperCase());
                     const priority = this.escapeHtml(task.priority_label ?? 'Non definie');
                     const dueDate = this.escapeHtml(task.due_date ?? 'Aucune');
-                    const subtasksTotal = Number(task.subtasks_total ?? 0);
-                    const subtasksDone = Number(task.subtasks_done ?? 0);
+                    const editUrl = `${config.taskUrlPrefix}/${safeTaskId}/edit`;
+                    const destroyUrl = `${config.taskUrlPrefix}/${safeTaskId}`;
+                    const actions = [];
+
+                    if (config.canUpdateTask) {
+                        actions.push(`<a href="${this.escapeHtml(editUrl)}" class="text-[11px] font-semibold text-[var(--client-accent)] hover:text-cyan-700">Modifier</a>`);
+                    }
+
+                    if (config.canDeleteTask) {
+                        actions.push(`
+                            <form method="POST" action="${this.escapeHtml(destroyUrl)}" onsubmit="return confirm('Supprimer cette tache ?');">
+                                <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="text-[11px] font-semibold text-rose-600 hover:text-rose-700">Supprimer</button>
+                            </form>
+                        `);
+                    }
 
                     return `
                         <article
@@ -798,26 +1166,48 @@
                             draggable="true"
                             data-task-id="${safeTaskId}"
                             data-task-title="${title}"
+                            data-task-key="SCRUM-${safeTaskId}"
+                            data-task-assignee="${assignee}"
                         >
                             <p class="jira-task-title">${title}</p>
-                            <p class="jira-task-date">${dueDate}</p>
-                            <p class="jira-task-key">SCRUM-${safeTaskId}</p>
                             <div class="jira-task-meta">
+                                <span class="jira-task-date">${dueDate}</span>
                                 <span>${priority}</span>
+                            </div>
+                            <div class="jira-task-meta">
+                                <span class="jira-task-key">SCRUM-${safeTaskId}</span>
                                 <span class="jira-task-avatar" title="${assignee}">${assigneeInitial}</span>
                             </div>
-                            <p class="jira-task-subtasks">Sous-taches: ${subtasksDone}/${subtasksTotal}</p>
+                            ${actions.length > 0 ? `<div class="jira-task-meta">${actions.join('')}</div>` : ''}
                         </article>
                     `;
                 },
                 applyBoardFilter() {
                     const query = this.normalizeForSearch(this.boardQuery);
 
-                    document.querySelectorAll('.board-card').forEach((card) => {
-                        const title = this.normalizeForSearch(card.getAttribute('data-task-title') ?? '');
-                        const key = this.normalizeForSearch(card.querySelector('.jira-task-key')?.textContent ?? '');
-                        const visible = query === '' || title.includes(query) || key.includes(query);
-                        card.classList.toggle('hidden', !visible);
+                    document.querySelectorAll('.board-column').forEach((column) => {
+                        const cards = column.querySelectorAll('.board-card');
+                        let visibleCount = 0;
+
+                        cards.forEach((card) => {
+                            const title = this.normalizeForSearch(card.getAttribute('data-task-title') ?? '');
+                            const key = this.normalizeForSearch(card.getAttribute('data-task-key') ?? '');
+                            const assignee = this.normalizeForSearch(card.getAttribute('data-task-assignee') ?? '');
+                            const visible = query === '' || title.includes(query) || key.includes(query) || assignee.includes(query);
+                            card.classList.toggle('hidden', !visible);
+                            if (visible) {
+                                visibleCount += 1;
+                            }
+                        });
+
+                        const existingFilterEmpty = column.querySelector('.board-filter-empty');
+                        if (query !== '' && cards.length > 0 && visibleCount === 0) {
+                            if (!existingFilterEmpty) {
+                                column.insertAdjacentHTML('beforeend', '<p class="jira-empty-col board-filter-empty">Aucun resultat</p>');
+                            }
+                        } else if (existingFilterEmpty) {
+                            existingFilterEmpty.remove();
+                        }
                     });
                 },
                 normalizeForSearch(value) {
@@ -873,10 +1263,35 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const commentId = Number(item.id ?? 0);
+                        const taskId = Number(item.task_id ?? 0);
+                        const userId = Number(item.user_id ?? 0);
                         const author = this.escapeHtml(item.author ?? 'Systeme');
                         const task = this.escapeHtml(item.task ?? 'Tache');
                         const body = this.escapeHtml(item.body ?? '');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
+                        const canManageComment = Boolean(config.canCreateComment) && (Boolean(config.canManageProject) || (Number(config.currentUserId ?? 0) === userId));
+                        const commentActionUrl = `${config.taskUrlPrefix}/${taskId}/comments/${commentId}`;
+                        const actions = canManageComment && commentId > 0 && taskId > 0
+                            ? `
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="${this.escapeHtml(commentActionUrl)}" class="space-y-2">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="PATCH">
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>${body}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="${this.escapeHtml(commentActionUrl)}" onsubmit="return confirm('Supprimer ce commentaire ?');">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
@@ -885,6 +1300,7 @@
                                     <span class="text-xs text-slate-500">${createdAt}</span>
                                 </div>
                                 <p class="mt-2 text-sm text-slate-600">${body}</p>
+                                ${actions}
                             </div>
                         `;
                     }).join('');
@@ -902,9 +1318,33 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const messageId = Number(item.id ?? 0);
+                        const userId = Number(item.user_id ?? 0);
                         const author = this.escapeHtml(item.author ?? 'Systeme');
                         const body = this.escapeHtml(item.body ?? '');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
+                        const canManageMessage = Boolean(config.canCreateMessage) && (Boolean(config.canManageProject) || (Number(config.currentUserId ?? 0) === userId));
+                        const messageActionUrl = `${config.messageUrlPrefix}/${messageId}`;
+                        const actions = canManageMessage && messageId > 0
+                            ? `
+                                <details class="mt-2">
+                                    <summary class="cursor-pointer text-xs font-semibold text-slate-700">Modifier / supprimer</summary>
+                                    <div class="mt-2 space-y-2">
+                                        <form method="POST" action="${this.escapeHtml(messageActionUrl)}" class="space-y-2">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="PATCH">
+                                            <textarea name="body" rows="3" class="w-full rounded-xl border-[var(--client-line)] bg-white text-sm" required>${body}</textarea>
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs">Mettre a jour</button>
+                                        </form>
+                                        <form method="POST" action="${this.escapeHtml(messageActionUrl)}" onsubmit="return confirm('Supprimer ce message ?');">
+                                            <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                            <input type="hidden" name="_method" value="DELETE">
+                                            <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
@@ -913,6 +1353,7 @@
                                     <span class="text-xs text-slate-500">${createdAt}</span>
                                 </div>
                                 <p class="mt-2 text-sm text-slate-600">${body}</p>
+                                ${actions}
                             </div>
                         `;
                     }).join('');
@@ -930,18 +1371,34 @@
                     }
 
                     container.innerHTML = items.map((item) => {
+                        const fileId = Number(item.id ?? 0);
+                        const uploaderId = Number(item.uploaded_by ?? 0);
                         const name = this.escapeHtml(item.name ?? '');
                         const version = Number(item.version ?? 1);
                         const uploader = this.escapeHtml(item.uploader ?? 'Systeme');
                         const createdAt = this.escapeHtml(item.created_at ?? '');
                         const sizeKb = (Number(item.size ?? 0) / 1024).toFixed(1);
                         const task = item.task ? `<p class="mt-1 text-xs text-slate-500">Lie a la tache: ${this.escapeHtml(item.task)}</p>` : '';
+                        const canDeleteFile = Boolean(config.canManageFiles) && (Boolean(config.canManageProject) || Number(config.currentUserId ?? 0) === uploaderId);
+                        const fileActionUrl = `${config.fileUrlPrefix}/${fileId}`;
+                        const deleteAction = canDeleteFile && fileId > 0
+                            ? `
+                                <form method="POST" action="${this.escapeHtml(fileActionUrl)}" onsubmit="return confirm('Supprimer ce fichier ?');">
+                                    <input type="hidden" name="_token" value="${this.escapeHtml(config.csrfToken)}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="client-button-muted !px-3 !py-2 !text-xs !text-rose-700">Supprimer</button>
+                                </form>
+                            `
+                            : '';
 
                         return `
                             <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <p class="text-sm font-semibold text-slate-900">${name} (v${version})</p>
-                                    <a href="${this.escapeHtml(item.download_url ?? '#')}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="${this.escapeHtml(item.download_url ?? '#')}" class="client-button-muted !px-3 !py-2 !text-xs">Telecharger</a>
+                                        ${deleteAction}
+                                    </div>
                                 </div>
                                 <p class="mt-1 text-xs text-slate-500">Par ${uploader} | ${sizeKb} KB | ${createdAt}</p>
                                 ${task}

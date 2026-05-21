@@ -3,7 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\TaskComment;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 
 class TaskCommentAddedNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     /**
      * Create a new notification instance.
@@ -25,7 +25,7 @@ class TaskCommentAddedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     /**
@@ -44,7 +44,7 @@ class TaskCommentAddedNotification extends Notification
             ->greeting('Bonjour,')
             ->line("{$authorName} a commente la tache \"{$taskTitle}\".")
             ->line("Commentaire : {$excerpt}")
-            ->action('Voir dans l espace client', url("/client/projects/{$projectId}#comments"))
+            ->action('Voir dans votre espace', url("/client/projects/{$projectId}#comments"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->comment->task_id}/edit"))
             ->line('Merci pour votre collaboration.');
     }

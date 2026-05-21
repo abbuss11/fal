@@ -1,19 +1,29 @@
 <?php
 
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\Client\ProjectFileController as ClientProjectFileController;
 use App\Http\Controllers\Client\ProjectMessageController as ClientProjectMessageController;
 use App\Http\Controllers\Client\ProjectController as ClientProjectController;
 use App\Http\Controllers\Client\ProjectReportController as ClientProjectReportController;
 use App\Http\Controllers\Client\SubtaskController as ClientSubtaskController;
 use App\Http\Controllers\Client\TaskController as ClientTaskController;
+use App\Http\Controllers\Client\TeamController as ClientTeamController;
 use App\Http\Controllers\Client\TimesheetController as ClientTimesheetController;
+use App\Http\Controllers\Client\UserController as ClientUserController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
 Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect()->route('client.dashboard');
+    }
+
     return view('welcome');
-});
+})->name('home');
 
 Route::get('/dashboard', function () {
     return redirect()->route('client.dashboard');
@@ -22,8 +32,29 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->group(function () {
     Route::get('/dashboard', ClientDashboardController::class)->name('dashboard');
     Route::get('/dashboard/snapshot', [ClientDashboardController::class, 'snapshot'])->name('dashboard.snapshot');
+    Route::patch('/notifications/read-all', [ClientNotificationController::class, 'markAllAsRead'])
+        ->middleware('permission:notifications.read')
+        ->name('notifications.read_all');
+    Route::patch('/notifications/{notificationId}/read', [ClientNotificationController::class, 'markAsRead'])
+        ->middleware('permission:notifications.read')
+        ->name('notifications.read');
     Route::get('/projects', [ClientProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/create', [ClientProjectController::class, 'create'])
+        ->middleware('permission:projects.create')
+        ->name('projects.create');
+    Route::post('/projects', [ClientProjectController::class, 'store'])
+        ->middleware('permission:projects.create')
+        ->name('projects.store');
     Route::get('/projects/{project}', [ClientProjectController::class, 'show'])->name('projects.show');
+    Route::get('/projects/{project}/edit', [ClientProjectController::class, 'edit'])
+        ->middleware('permission:projects.update')
+        ->name('projects.edit');
+    Route::patch('/projects/{project}', [ClientProjectController::class, 'update'])
+        ->middleware('permission:projects.update')
+        ->name('projects.update');
+    Route::delete('/projects/{project}', [ClientProjectController::class, 'destroy'])
+        ->middleware('permission:projects.delete')
+        ->name('projects.destroy');
     Route::post('/projects/{project}/tasks/{task}/move', [ClientProjectController::class, 'moveTask'])
         ->middleware('permission:tasks.move')
         ->name('projects.tasks.move');
@@ -31,9 +62,18 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::post('/projects/{project}/messages', [ClientProjectMessageController::class, 'store'])
         ->middleware('permission:messages.create')
         ->name('projects.messages.store');
+    Route::patch('/projects/{project}/messages/{projectMessage}', [ClientProjectMessageController::class, 'update'])
+        ->middleware('permission:messages.create')
+        ->name('projects.messages.update');
+    Route::delete('/projects/{project}/messages/{projectMessage}', [ClientProjectMessageController::class, 'destroy'])
+        ->middleware('permission:messages.create')
+        ->name('projects.messages.destroy');
     Route::post('/projects/{project}/files', [ClientProjectFileController::class, 'store'])
         ->middleware('permission:files.create')
         ->name('projects.files.store');
+    Route::delete('/projects/{project}/files/{projectFile}', [ClientProjectFileController::class, 'destroy'])
+        ->middleware('permission:files.create')
+        ->name('projects.files.destroy');
     Route::get('/projects/{project}/files/{projectFile}/download', [ClientProjectFileController::class, 'download'])
         ->middleware('permission:files.read')
         ->name('projects.files.download');
@@ -46,20 +86,100 @@ Route::middleware(['auth', 'verified'])->prefix('client')->name('client.')->grou
     Route::delete('/projects/{project}/members/{member}', [ClientProjectController::class, 'removeMember'])
         ->middleware('permission:projects.manage_members')
         ->name('projects.members.remove');
+    Route::post('/projects/{project}/archive', [ClientProjectController::class, 'archive'])
+        ->middleware('permission:projects.archive')
+        ->name('projects.archive');
+    Route::post('/projects/{project}/unarchive', [ClientProjectController::class, 'unarchive'])
+        ->middleware('permission:projects.archive')
+        ->name('projects.unarchive');
+    Route::post('/projects/{project}/duplicate', [ClientProjectController::class, 'duplicate'])
+        ->middleware('permission:projects.duplicate')
+        ->name('projects.duplicate');
     Route::get('/projects/{project}/report', [ClientProjectReportController::class, 'show'])->name('projects.report');
     Route::get('/projects/{project}/report/download', [ClientProjectReportController::class, 'download'])->name('projects.report.download');
     Route::get('/projects/{project}/report/download/pdf', [ClientProjectReportController::class, 'downloadPdf'])->name('projects.report.download-pdf');
     Route::get('/tasks', [ClientTaskController::class, 'index'])->name('tasks.index');
+    Route::get('/tasks/create', [ClientTaskController::class, 'create'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.create');
+    Route::post('/tasks', [ClientTaskController::class, 'store'])
+        ->middleware('permission:tasks.create')
+        ->name('tasks.store');
+    Route::get('/tasks/{task}/edit', [ClientTaskController::class, 'edit'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.edit');
+    Route::patch('/tasks/{task}', [ClientTaskController::class, 'update'])
+        ->middleware('permission:tasks.update')
+        ->name('tasks.update');
+    Route::delete('/tasks/{task}', [ClientTaskController::class, 'destroy'])
+        ->middleware('permission:tasks.delete')
+        ->name('tasks.destroy');
     Route::get('/tasks/calendar', [ClientTaskController::class, 'calendar'])->name('tasks.calendar');
     Route::post('/tasks/{task}/comments', [ClientTaskController::class, 'storeComment'])
         ->middleware('permission:comments.create')
         ->name('tasks.comments.store');
+    Route::patch('/tasks/{task}/comments/{comment}', [ClientTaskController::class, 'updateComment'])
+        ->middleware('permission:comments.create')
+        ->name('tasks.comments.update');
+    Route::delete('/tasks/{task}/comments/{comment}', [ClientTaskController::class, 'destroyComment'])
+        ->middleware('permission:comments.create')
+        ->name('tasks.comments.destroy');
     Route::post('/tasks/{task}/subtasks', [ClientSubtaskController::class, 'store'])
         ->middleware('permission:tasks.subtasks.manage')
         ->name('tasks.subtasks.store');
     Route::patch('/tasks/{task}/subtasks/{subtask}', [ClientSubtaskController::class, 'update'])
         ->middleware('permission:tasks.subtasks.manage')
         ->name('tasks.subtasks.update');
+
+    Route::get('/users', [ClientUserController::class, 'index'])
+        ->middleware('permission:users.read')
+        ->name('users.index');
+    Route::get('/users/create', [ClientUserController::class, 'create'])
+        ->middleware('permission:users.create')
+        ->name('users.create');
+    Route::post('/users', [ClientUserController::class, 'store'])
+        ->middleware('permission:users.create')
+        ->name('users.store');
+    Route::get('/users/{user}/edit', [ClientUserController::class, 'edit'])
+        ->middleware('permission:users.update')
+        ->name('users.edit');
+    Route::patch('/users/{user}', [ClientUserController::class, 'update'])
+        ->middleware('permission:users.update')
+        ->name('users.update');
+    Route::delete('/users/{user}', [ClientUserController::class, 'destroy'])
+        ->middleware('permission:users.delete')
+        ->name('users.destroy');
+
+    Route::get('/teams', [ClientTeamController::class, 'index'])
+        ->middleware('permission:teams.read')
+        ->name('teams.index');
+    Route::get('/teams/create', [ClientTeamController::class, 'create'])
+        ->middleware('permission:teams.create')
+        ->name('teams.create');
+    Route::post('/teams', [ClientTeamController::class, 'store'])
+        ->middleware('permission:teams.create')
+        ->name('teams.store');
+    Route::get('/teams/{team}', [ClientTeamController::class, 'show'])
+        ->middleware('permission:teams.read')
+        ->name('teams.show');
+    Route::get('/teams/{team}/edit', [ClientTeamController::class, 'edit'])
+        ->middleware('permission:teams.update')
+        ->name('teams.edit');
+    Route::patch('/teams/{team}', [ClientTeamController::class, 'update'])
+        ->middleware('permission:teams.update')
+        ->name('teams.update');
+    Route::delete('/teams/{team}', [ClientTeamController::class, 'destroy'])
+        ->middleware('permission:teams.delete')
+        ->name('teams.destroy');
+    Route::post('/teams/{team}/members', [ClientTeamController::class, 'storeMember'])
+        ->middleware('permission:teams.manage_members')
+        ->name('teams.members.store');
+    Route::patch('/teams/{team}/members/{member}', [ClientTeamController::class, 'updateMember'])
+        ->middleware('permission:teams.manage_members')
+        ->name('teams.members.update');
+    Route::delete('/teams/{team}/members/{member}', [ClientTeamController::class, 'removeMember'])
+        ->middleware('permission:teams.manage_members')
+        ->name('teams.members.remove');
 
     Route::get('/timesheets', [ClientTimesheetController::class, 'index'])
         ->middleware('permission:timesheets.read')

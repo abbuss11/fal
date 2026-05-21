@@ -4,14 +4,14 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class TaskUpdatedNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     /**
      * Create a new notification instance.
@@ -29,7 +29,7 @@ class TaskUpdatedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     /**
@@ -53,7 +53,7 @@ class TaskUpdatedNotification extends Notification
             ->greeting('Bonjour,')
             ->line("La tache \"{$this->task->title}\" a ete modifiee par {$actor}.")
             ->line('Changements: '.$changesSummary)
-            ->action('Voir dans le portail client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans le workspace', url("/client/projects/{$this->task->project_id}#board"))
             ->line('Vous recevez cet email pour rester synchronise sur le projet.');
     }
 

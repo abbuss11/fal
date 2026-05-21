@@ -4,7 +4,7 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -12,7 +12,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class TaskAssignedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     /**
      * Create a new notification instance.
@@ -29,7 +29,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     /**
@@ -47,7 +47,7 @@ class TaskAssignedNotification extends Notification implements ShouldQueue
             ->line("La tache \"{$this->task->title}\" vous a ete assignee par {$assignedBy}.")
             ->line("Projet : {$projectName}")
             ->line("Echeance : {$dueDate}")
-            ->action('Voir dans l espace client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans votre espace', url("/client/projects/{$this->task->project_id}#board"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->task->id}/edit"))
             ->line('Merci de votre collaboration.');
     }

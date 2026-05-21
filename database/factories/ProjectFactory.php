@@ -25,14 +25,19 @@ class ProjectFactory extends Factory
 
         return [
             'owner_id' => User::factory()->projectManager(),
+            'client_id' => null,
             'name' => fake()->sentence(3),
             'description' => fake()->paragraph(),
             'objective' => fake()->sentence(10),
             'status' => fake()->randomElement(['planning', 'active', 'on_hold', 'completed', 'cancelled']),
+            'is_template' => false,
+            'template_name' => null,
             'priority' => fake()->randomElement(['low', 'medium', 'high']),
             'budget' => fake()->randomFloat(2, 5000, 150000),
             'start_date' => $startDate,
             'due_date' => $dueDate,
+            'is_archived' => false,
+            'archived_at' => null,
             'completed_at' => null,
         ];
     }

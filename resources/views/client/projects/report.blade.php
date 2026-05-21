@@ -8,69 +8,87 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Rapport Projet</p>
-                <h1 class="mt-1 text-2xl font-semibold text-slate-900">{{ $report['project']['name'] }}</h1>
-                <p class="mt-1 text-sm text-slate-500">Genere le {{ $report['generated_at'] }}</p>
+                <p class="fal-brand-kicker">Project Intelligence</p>
+                <h1 class="mt-1 text-2xl font-semibold client-heading-accent">{{ $report['project']['name'] }} - Rapport SaaS</h1>
+                <p class="mt-1 text-sm text-slate-500">Genere le {{ $report['generated_at'] }} | Data live synchronisee.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ route('client.projects.show', $project) }}" class="client-button-muted">Retour projet</a>
-                <a href="{{ route('client.projects.report.download', $project) }}" class="client-button">Telecharger JSON</a>
-                <a href="{{ route('client.projects.report.download-pdf', $project) }}" class="client-button-muted">Telecharger PDF</a>
+                <a href="{{ route('client.projects.show', $project) }}" class="client-button-muted">Retour workspace</a>
+                <a href="{{ route('client.projects.report.download', $project) }}" class="client-button">Exporter JSON</a>
+                <a href="{{ route('client.projects.report.download-pdf', $project) }}" class="client-button-muted">Exporter PDF</a>
             </div>
         </div>
     </x-slot>
 
     <div class="client-shell space-y-6">
-        <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <article class="client-stat">
-                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Progression</p>
-                <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-report-stat="progress_rate">{{ $stats['progress_rate'] }}%</p>
-            </article>
-            <article class="client-stat">
-                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Taches totales</p>
-                <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-report-stat="tasks_total">{{ $stats['tasks_total'] }}</p>
-            </article>
-            <article class="client-stat">
-                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Membres actifs</p>
-                <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-report-stat="members_active">{{ $stats['members_active'] }}</p>
-            </article>
-            <article class="client-stat">
-                <p class="text-xs uppercase tracking-[0.12em] text-slate-500">Retards</p>
-                <p class="mt-2 text-3xl font-semibold text-slate-900" data-live-report-stat="tasks_overdue">{{ $stats['tasks_overdue'] }}</p>
-            </article>
+        <section class="saas-hero">
+            <div class="saas-hero-content grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <article class="saas-kpi-card">
+                    <p class="saas-kpi-label">Progression</p>
+                    <p class="saas-kpi-value" data-live-report-stat="progress_rate">{{ $stats['progress_rate'] }}%</p>
+                    <p class="saas-kpi-help">Livraison globale</p>
+                </article>
+                <article class="saas-kpi-card">
+                    <p class="saas-kpi-label">Taches totales</p>
+                    <p class="saas-kpi-value" data-live-report-stat="tasks_total">{{ $stats['tasks_total'] }}</p>
+                    <p class="saas-kpi-help">{{ $stats['tasks_done'] ?? 0 }} cloturees</p>
+                </article>
+                <article class="saas-kpi-card">
+                    <p class="saas-kpi-label">Membres actifs</p>
+                    <p class="saas-kpi-value" data-live-report-stat="members_active">{{ $stats['members_active'] }}</p>
+                    <p class="saas-kpi-help">Collaboration projet</p>
+                </article>
+                <article class="saas-kpi-card">
+                    <p class="saas-kpi-label">Retards</p>
+                    <p class="saas-kpi-value" data-live-report-stat="tasks_overdue">{{ $stats['tasks_overdue'] }}</p>
+                    <p class="saas-kpi-help">Signal de risque</p>
+                </article>
+            </div>
         </section>
 
         <section class="grid gap-5 lg:grid-cols-2">
-            <article class="client-panel p-5">
-                <h2 class="text-lg font-semibold text-slate-900">Analyse des statuts</h2>
-                <div class="mt-4 space-y-2">
+            <article class="saas-panel">
+                <h2 class="saas-panel-title">Analyse des statuts</h2>
+                <div class="mt-4 space-y-3">
                     @foreach ($statusLabels as $key => $label)
-                        <div class="flex items-center justify-between rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm">
-                            <span>{{ $label }}</span>
-                            <span class="font-semibold">{{ $statusBreakdown[$key] ?? 0 }}</span>
+                        @php
+                            $statusCount = (int) ($statusBreakdown[$key] ?? 0);
+                            $statusPercent = $stats['tasks_total'] > 0 ? (int) round(($statusCount / $stats['tasks_total']) * 100) : 0;
+                        @endphp
+                        <div>
+                            <div class="mb-1 flex items-center justify-between text-sm text-slate-700">
+                                <span>{{ $label }}</span>
+                                <span class="font-semibold">{{ $statusCount }} ({{ $statusPercent }}%)</span>
+                            </div>
+                            <div class="h-1.5 rounded-full bg-slate-200">
+                                <div class="h-1.5 rounded-full bg-gradient-to-r from-[var(--client-accent)] to-[var(--client-accent-soft)]" style="width: {{ $statusPercent }}%;"></div>
+                            </div>
                         </div>
                     @endforeach
                 </div>
             </article>
 
-            <article class="client-panel p-5">
-                <h2 class="text-lg font-semibold text-slate-900">Analyse des priorites</h2>
+            <article class="saas-panel">
+                <h2 class="saas-panel-title">Analyse des priorites</h2>
                 <div class="mt-4 space-y-2">
                     @foreach ($priorityLabels as $key => $label)
-                        <div class="flex items-center justify-between rounded-xl border border-[var(--client-line)] bg-white px-3 py-2 text-sm">
+                        <div class="saas-list-item flex items-center justify-between">
                             <span>{{ $label }}</span>
-                            <span class="font-semibold">{{ $priorityBreakdown[$key] ?? 0 }}</span>
+                            <span class="font-semibold text-slate-800">{{ $priorityBreakdown[$key] ?? 0 }}</span>
                         </div>
                     @endforeach
                 </div>
             </article>
         </section>
 
-        <section class="client-panel p-5">
-            <h2 class="text-lg font-semibold text-slate-900">Membres et charge de travail</h2>
-            <div class="mt-4 overflow-x-auto">
+        <section class="saas-panel">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="saas-panel-title">Membres et charge de travail</h2>
+                <span class="text-xs text-slate-500">{{ count($report['member_workload']) }} membres</span>
+            </div>
+            <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-[var(--client-line)]">
-                    <thead class="bg-slate-50">
+                    <thead class="saas-table-head">
                         <tr>
                             <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Membre</th>
                             <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Role</th>
@@ -96,11 +114,11 @@
             </div>
         </section>
 
-        <section class="client-panel p-5">
-            <h2 class="text-lg font-semibold text-slate-900">Timeline recente</h2>
+        <section class="saas-panel">
+            <h2 class="saas-panel-title">Timeline recente</h2>
             <div class="mt-4 space-y-2" id="report-timeline-list">
                 @forelse ($report['timeline'] as $event)
-                    <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
+                    <div class="saas-list-item">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <p class="text-sm font-semibold text-slate-900">{{ $event['action'] }}</p>
                             <span class="text-xs text-slate-500">{{ $event['date'] }}</span>
@@ -108,7 +126,7 @@
                         <p class="mt-1 text-xs text-slate-500">Acteur: {{ $event['actor'] }} | Tache: {{ $event['task'] ?? 'N/A' }}</p>
                     </div>
                 @empty
-                    <p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucun evenement.</p>
+                    <p class="saas-empty">Aucun evenement.</p>
                 @endforelse
             </div>
         </section>
@@ -151,13 +169,13 @@
                 }
 
                 if (!Array.isArray(events) || events.length === 0) {
-                    list.innerHTML = '<p class="rounded-xl border border-dashed border-[var(--client-line)] bg-white p-3 text-sm text-slate-500">Aucun evenement.</p>';
+                    list.innerHTML = '<p class="saas-empty">Aucun evenement.</p>';
 
                     return;
                 }
 
                 list.innerHTML = events.map((event) => `
-                    <div class="rounded-xl border border-[var(--client-line)] bg-white p-3">
+                    <div class="saas-list-item">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <p class="text-sm font-semibold text-slate-900">${escapeHtml(event.action ?? '')}</p>
                             <span class="text-xs text-slate-500">${escapeHtml(event.date ?? '')}</span>

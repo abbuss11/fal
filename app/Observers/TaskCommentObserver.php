@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\TaskCommentAddedNotification;
 use App\Notifications\UserMentionedNotification;
 use App\Services\MentionResolverService;
+use App\Support\Notifications\SendsNotificationsSafely;
 use App\Support\Realtime\DashboardBroadcaster;
 use App\Support\Realtime\WorkspaceBroadcaster;
 use Illuminate\Support\Collection;
@@ -14,6 +15,8 @@ use Illuminate\Support\Str;
 
 class TaskCommentObserver
 {
+    use SendsNotificationsSafely;
+
     /**
      * Handle the TaskComment "created" event.
      */
@@ -31,7 +34,11 @@ class TaskCommentObserver
         ]);
 
         foreach ($this->recipients($taskComment) as $recipient) {
-            $recipient->notify(new TaskCommentAddedNotification($taskComment));
+            $this->notifySafely($recipient, new TaskCommentAddedNotification($taskComment), [
+                'context' => 'task_comment_added',
+                'task_id' => $taskComment->task_id,
+                'comment_id' => $taskComment->id,
+            ]);
         }
 
         if ($project) {
@@ -48,12 +55,16 @@ class TaskCommentObserver
                     'user_id' => $mentionedUser->id,
                 ]);
 
-                $mentionedUser->notify(new UserMentionedNotification(
+                $this->notifySafely($mentionedUser, new UserMentionedNotification(
                     project: $project,
                     contextLabel: 'un commentaire de tache',
                     excerpt: Str::limit($taskComment->body, 180),
                     mentionedBy: $taskComment->user,
-                ));
+                ), [
+                    'context' => 'task_comment_mention',
+                    'task_id' => $taskComment->task_id,
+                    'comment_id' => $taskComment->id,
+                ]);
             }
         }
 

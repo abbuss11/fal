@@ -14,8 +14,9 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="client-page antialiased">
-        <div class="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-orange-300/30 blur-3xl"></div>
-        <div class="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full bg-teal-300/25 blur-3xl"></div>
+        <div class="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-cyan-300/30 blur-3xl"></div>
+        <div class="pointer-events-none absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-300/25 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-20 left-1/3 h-72 w-72 rounded-full bg-teal-200/25 blur-3xl"></div>
 
         <div class="relative min-h-screen pb-12">
             @include('layouts.navigation')
@@ -24,7 +25,7 @@
                 <header class="pt-8">
                     <div class="client-shell">
                         <div class="client-panel px-6 py-5 sm:px-8">
-                        {{ $header }}
+                            {{ $header }}
                         </div>
                     </div>
                 </header>
@@ -36,3 +37,4 @@
         </div>
     </body>
 </html>
+

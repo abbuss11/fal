@@ -330,7 +330,7 @@
                 <article class="fal-kpi-card">
                     <p>Utilisateurs</p>
                     <p>{{ $stats['users_total'] ?? 0 }}</p>
-                    <p>Comptes enregistrés</p>
+                    <p>Comptes enregistres</p>
                 </article>
                 <article class="fal-kpi-card">
                     <p>Projets</p>

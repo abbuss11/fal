@@ -21,7 +21,11 @@ class User extends Authenticatable implements FilamentUser
 
     public const ROLE_PROJECT_MANAGER = 'project_manager';
 
+    public const ROLE_MANAGER = 'manager';
+
     public const ROLE_MEMBER = 'member';
+
+    public const ROLE_CLIENT = 'client';
 
     /**
      * The attributes that are mass assignable.
@@ -40,6 +44,9 @@ class User extends Authenticatable implements FilamentUser
         'phone',
         'bio',
         'avatar_path',
+        'notify_email',
+        'notify_realtime',
+        'notify_push',
     ];
 
     /**
@@ -66,6 +73,9 @@ class User extends Authenticatable implements FilamentUser
             'role' => 'string',
             'is_active' => 'boolean',
             'last_seen_at' => 'datetime',
+            'notify_email' => 'boolean',
+            'notify_realtime' => 'boolean',
+            'notify_push' => 'boolean',
         ];
     }
 
@@ -78,8 +88,10 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             self::ROLE_ADMIN => 'Administrateur',
+            self::ROLE_MANAGER => 'Manager',
             self::ROLE_PROJECT_MANAGER => 'Chef de projet',
             self::ROLE_MEMBER => 'Membre',
+            self::ROLE_CLIENT => 'Client',
         ];
     }
 
@@ -90,16 +102,26 @@ class User extends Authenticatable implements FilamentUser
     {
         return [
             self::ROLE_ADMIN => ['*'],
-            self::ROLE_PROJECT_MANAGER => [
+            self::ROLE_MANAGER => [
+                'users.read',
+                'users.create',
+                'users.update',
+                'users.delete',
+                'dashboard.read',
+                'notifications.read',
                 'projects.read',
                 'projects.create',
                 'projects.update',
+                'projects.archive',
+                'projects.duplicate',
                 'projects.manage_members',
                 'tasks.read',
                 'tasks.create',
                 'tasks.update',
                 'tasks.move',
                 'tasks.subtasks.manage',
+                'tasks.dependencies.manage',
+                'tasks.tags.manage',
                 'comments.read',
                 'comments.create',
                 'messages.read',
@@ -109,6 +131,44 @@ class User extends Authenticatable implements FilamentUser
                 'timesheets.read',
                 'timesheets.create',
                 'timesheets.update',
+                'teams.read',
+                'teams.create',
+                'teams.update',
+                'teams.delete',
+                'teams.manage_members',
+                'clients.read',
+            ],
+            self::ROLE_PROJECT_MANAGER => [
+                'users.read',
+                'users.create',
+                'users.update',
+                'projects.read',
+                'projects.create',
+                'projects.update',
+                'projects.archive',
+                'projects.duplicate',
+                'projects.manage_members',
+                'tasks.read',
+                'tasks.create',
+                'tasks.update',
+                'tasks.move',
+                'tasks.subtasks.manage',
+                'tasks.dependencies.manage',
+                'tasks.tags.manage',
+                'comments.read',
+                'comments.create',
+                'messages.read',
+                'messages.create',
+                'files.read',
+                'files.create',
+                'timesheets.read',
+                'timesheets.create',
+                'timesheets.update',
+                'teams.read',
+                'teams.create',
+                'teams.update',
+                'teams.delete',
+                'teams.manage_members',
                 'dashboard.read',
                 'notifications.read',
             ],
@@ -118,6 +178,7 @@ class User extends Authenticatable implements FilamentUser
                 'tasks.update',
                 'tasks.move',
                 'tasks.subtasks.manage',
+                'tasks.tags.manage',
                 'comments.read',
                 'comments.create',
                 'messages.read',
@@ -126,6 +187,15 @@ class User extends Authenticatable implements FilamentUser
                 'files.create',
                 'timesheets.read',
                 'timesheets.create',
+                'teams.read',
+                'dashboard.read',
+                'notifications.read',
+            ],
+            self::ROLE_CLIENT => [
+                'projects.read',
+                'tasks.read',
+                'comments.read',
+                'files.read',
                 'dashboard.read',
                 'notifications.read',
             ],
@@ -243,13 +313,66 @@ class User extends Authenticatable implements FilamentUser
         return $project->members()
             ->where('users.id', $this->id)
             ->wherePivot('is_active', true)
-            ->wherePivotIn('role', [self::ROLE_PROJECT_MANAGER])
+            ->wherePivotIn('role', [self::ROLE_PROJECT_MANAGER, self::ROLE_MANAGER])
+            ->exists();
+    }
+
+    public function visibleTeamsQuery(): Builder
+    {
+        $query = Team::query();
+
+        if ($this->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $builder): void {
+            $builder
+                ->where('owner_id', $this->id)
+                ->orWhereHas('members', function (Builder $memberQuery): void {
+                    $memberQuery
+                        ->where('users.id', $this->id)
+                        ->where('team_user.is_active', true);
+                });
+        });
+    }
+
+    public function canAccessTeam(Team $team): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        if ($team->owner_id === $this->id) {
+            return true;
+        }
+
+        return $team->members()
+            ->where('users.id', $this->id)
+            ->wherePivot('is_active', true)
+            ->exists();
+    }
+
+    public function canManageTeam(Team $team): bool
+    {
+        if ($this->isAdmin() || $team->owner_id === $this->id) {
+            return true;
+        }
+
+        return $team->members()
+            ->where('users.id', $this->id)
+            ->wherePivot('is_active', true)
+            ->wherePivotIn('role', [self::ROLE_PROJECT_MANAGER, self::ROLE_MANAGER])
             ->exists();
     }
 
     public function ownedProjects(): HasMany
     {
         return $this->hasMany(Project::class, 'owner_id');
+    }
+
+    public function ownedTeams(): HasMany
+    {
+        return $this->hasMany(Team::class, 'owner_id');
     }
 
     public function projects(): BelongsToMany
@@ -262,6 +385,18 @@ class User extends Authenticatable implements FilamentUser
     public function activeProjects(): BelongsToMany
     {
         return $this->projects()->wherePivot('is_active', true);
+    }
+
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class)
+            ->withPivot(['role', 'is_active'])
+            ->withTimestamps();
+    }
+
+    public function activeTeams(): BelongsToMany
+    {
+        return $this->teams()->wherePivot('is_active', true);
     }
 
     public function comments(): HasMany
@@ -321,7 +456,9 @@ class User extends Authenticatable implements FilamentUser
             $user->role = $role;
             $user->is_admin = $role === self::ROLE_ADMIN;
             $user->is_active = $user->is_active ?? true;
+            $user->notify_email = $user->notify_email ?? true;
+            $user->notify_realtime = $user->notify_realtime ?? true;
+            $user->notify_push = $user->notify_push ?? true;
         });
     }
 }
-

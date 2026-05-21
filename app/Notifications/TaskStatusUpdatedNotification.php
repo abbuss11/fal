@@ -4,14 +4,14 @@ namespace App\Notifications;
 
 use App\Models\Task;
 use App\Models\User;
-use App\Notifications\Channels\MobilePushChannel;
+use App\Notifications\Concerns\ResolvesNotificationChannels;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class TaskStatusUpdatedNotification extends Notification
 {
-    use Queueable;
+    use Queueable, ResolvesNotificationChannels;
 
     /**
      * Create a new notification instance.
@@ -30,7 +30,7 @@ class TaskStatusUpdatedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast', MobilePushChannel::class];
+        return $this->resolveChannels($notifiable);
     }
 
     /**
@@ -50,7 +50,7 @@ class TaskStatusUpdatedNotification extends Notification
             ->line("Le statut de la tache \"{$this->task->title}\" a ete modifie par {$changedBy}.")
             ->line("Ancien statut : {$from}")
             ->line("Nouveau statut : {$to}")
-            ->action('Voir dans l espace client', url("/client/projects/{$this->task->project_id}#board"))
+            ->action('Voir dans votre workspace', url("/client/projects/{$this->task->project_id}#board"))
             ->line("Lien admin: ".url("/abba/tasks/{$this->task->id}/edit"))
             ->line('Merci de suivre les avancements.');
     }

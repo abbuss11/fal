@@ -29,6 +29,9 @@ class ProfileUpdateRequest extends FormRequest
             'job_title' => ['nullable', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:60'],
             'bio' => ['nullable', 'string', 'max:2000'],
+            'notify_email' => ['nullable', 'boolean'],
+            'notify_realtime' => ['nullable', 'boolean'],
+            'notify_push' => ['nullable', 'boolean'],
         ];
     }
 }

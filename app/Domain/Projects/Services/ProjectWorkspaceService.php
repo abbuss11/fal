@@ -84,10 +84,17 @@ class ProjectWorkspaceService
             ],
             'board_columns' => $this->buildBoardColumns($tasks),
             'stats' => $overview['stats'] ?? [],
+            'status_breakdown' => $overview['status_breakdown'] ?? [],
+            'priority_breakdown' => $overview['priority_breakdown'] ?? [],
+            'velocity' => $overview['velocity_last_weeks'] ?? [],
+            'member_workload' => $overview['member_workload'] ?? [],
             'timeline' => $timeline,
             'recent_comments' => $comments
                 ->map(function (TaskComment $comment): array {
                     return [
+                        'id' => (int) $comment->id,
+                        'task_id' => (int) $comment->task_id,
+                        'user_id' => $comment->user_id ? (int) $comment->user_id : null,
                         'author' => $comment->user?->name ?? 'Systeme',
                         'task' => $comment->task?->title ?? 'Tache',
                         'body' => (string) $comment->body,
@@ -99,6 +106,8 @@ class ProjectWorkspaceService
             'recent_messages' => $messages
                 ->map(function (ProjectMessage $message): array {
                     return [
+                        'id' => (int) $message->id,
+                        'user_id' => $message->user_id ? (int) $message->user_id : null,
                         'author' => $message->user?->name ?? 'Systeme',
                         'body' => (string) $message->body,
                         'created_at' => $message->created_at?->format('d/m/Y H:i'),
@@ -113,6 +122,7 @@ class ProjectWorkspaceService
                         'name' => (string) $file->original_name,
                         'version' => (int) $file->version,
                         'size' => (int) $file->size,
+                        'uploaded_by' => $file->uploaded_by ? (int) $file->uploaded_by : null,
                         'uploader' => $file->uploader?->name ?? 'Systeme',
                         'task' => $file->task?->title,
                         'created_at' => $file->created_at?->format('d/m/Y H:i'),

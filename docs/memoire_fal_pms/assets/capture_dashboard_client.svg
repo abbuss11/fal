@@ -1,0 +1,70 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="860" viewBox="0 0 1360 860">
+  <defs>
+    <style>
+      .h{font:700 20px 'Segoe UI',Arial,sans-serif;fill:#102a43}
+      .t{font:500 13px 'Segoe UI',Arial,sans-serif;fill:#243b53}
+      .sm{font:600 12px 'Segoe UI',Arial,sans-serif;fill:#486581}
+    </style>
+  </defs>
+  <rect width="1360" height="860" fill="#eef3f8"/>
+  <rect x="24" y="24" width="1312" height="812" rx="14" fill="#fff" stroke="#cbd5e0" stroke-width="2"/>
+  <rect x="24" y="24" width="1312" height="52" rx="14" fill="#1f2937"/>
+  <circle cx="52" cy="50" r="6" fill="#ef4444"/>
+  <circle cx="72" cy="50" r="6" fill="#f59e0b"/>
+  <circle cx="92" cy="50" r="6" fill="#10b981"/>
+  <text x="120" y="56" fill="#f8fafc" style="font:600 14px 'Segoe UI',Arial,sans-serif;">Capture 1 - Dashboard Client FAL-PMS</text>
+
+  <rect x="44" y="96" width="220" height="720" rx="10" fill="#0f172a"/>
+  <text x="66" y="132" fill="#e2e8f0" style="font:700 18px 'Segoe UI',Arial,sans-serif;">FAL-PMS</text>
+  <text x="66" y="168" fill="#94a3b8" style="font:500 13px 'Segoe UI',Arial,sans-serif;">Navigation</text>
+  <rect x="62" y="184" width="184" height="34" rx="7" fill="#1d4ed8"/>
+  <text x="76" y="206" fill="#fff" style="font:600 13px 'Segoe UI',Arial,sans-serif;">Dashboard</text>
+  <text x="76" y="240" fill="#cbd5e1" style="font:500 13px 'Segoe UI',Arial,sans-serif;">Projets</text>
+  <text x="76" y="270" fill="#cbd5e1" style="font:500 13px 'Segoe UI',Arial,sans-serif;">Tâches</text>
+  <text x="76" y="300" fill="#cbd5e1" style="font:500 13px 'Segoe UI',Arial,sans-serif;">Calendrier</text>
+  <text x="76" y="330" fill="#cbd5e1" style="font:500 13px 'Segoe UI',Arial,sans-serif;">Timesheets</text>
+
+  <text x="292" y="126" class="h">Vue globale du portefeuille projet</text>
+  <text x="292" y="152" class="sm">KPI, statut des tâches, vélocité et charge projet</text>
+
+  <rect x="292" y="180" width="240" height="100" rx="10" fill="#ebf8ff" stroke="#90cdf4"/>
+  <text x="310" y="214" class="sm">Projets actifs</text>
+  <text x="310" y="252" style="font:700 30px 'Segoe UI',Arial,sans-serif;fill:#1d4ed8;">12</text>
+
+  <rect x="548" y="180" width="240" height="100" rx="10" fill="#ecfdf5" stroke="#86efac"/>
+  <text x="566" y="214" class="sm">Tâches terminées</text>
+  <text x="566" y="252" style="font:700 30px 'Segoe UI',Arial,sans-serif;fill:#15803d;">84</text>
+
+  <rect x="804" y="180" width="240" height="100" rx="10" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="822" y="214" class="sm">Tâches en retard</text>
+  <text x="822" y="252" style="font:700 30px 'Segoe UI',Arial,sans-serif;fill:#b45309;">7</text>
+
+  <rect x="1060" y="180" width="248" height="100" rx="10" fill="#f5f3ff" stroke="#c4b5fd"/>
+  <text x="1078" y="214" class="sm">Notifications non lues</text>
+  <text x="1078" y="252" style="font:700 30px 'Segoe UI',Arial,sans-serif;fill:#6d28d9;">5</text>
+
+  <rect x="292" y="304" width="640" height="250" rx="10" fill="#fff" stroke="#cbd5e0"/>
+  <text x="312" y="338" class="h">Vélocité hebdomadaire</text>
+  <polyline points="330,500 390,470 450,480 510,430 570,420 630,390 690,410 750,360 810,350 870,320" fill="none" stroke="#2563eb" stroke-width="3"/>
+  <line x1="330" y1="520" x2="900" y2="520" stroke="#e2e8f0"/>
+  <line x1="330" y1="370" x2="330" y2="520" stroke="#e2e8f0"/>
+  <text x="330" y="542" class="t">S1</text><text x="390" y="542" class="t">S2</text><text x="450" y="542" class="t">S3</text><text x="510" y="542" class="t">S4</text>
+
+  <rect x="952" y="304" width="356" height="250" rx="10" fill="#fff" stroke="#cbd5e0"/>
+  <text x="972" y="338" class="h">Mes tâches ouvertes</text>
+  <rect x="972" y="356" width="316" height="40" rx="6" fill="#f8fafc"/>
+  <text x="986" y="381" class="t">Intégrer API mobile - échéance 18/05</text>
+  <rect x="972" y="404" width="316" height="40" rx="6" fill="#f8fafc"/>
+  <text x="986" y="429" class="t">Révision backlog sprint - échéance 20/05</text>
+  <rect x="972" y="452" width="316" height="40" rx="6" fill="#f8fafc"/>
+  <text x="986" y="477" class="t">Validation rapport PDF - échéance 22/05</text>
+
+  <rect x="292" y="574" width="1016" height="242" rx="10" fill="#fff" stroke="#cbd5e0"/>
+  <text x="312" y="608" class="h">Charge par projet</text>
+  <rect x="312" y="632" width="996" height="36" rx="6" fill="#f8fafc"/>
+  <text x="326" y="655" class="t">Projet CRM Africa: 68% complété - 3 tâches ouvertes - 1 retard</text>
+  <rect x="312" y="676" width="996" height="36" rx="6" fill="#f8fafc"/>
+  <text x="326" y="699" class="t">Projet FAL Academy: 42% complété - 8 tâches ouvertes - 2 retards</text>
+  <rect x="312" y="720" width="996" height="36" rx="6" fill="#f8fafc"/>
+  <text x="326" y="743" class="t">Projet Data Hub: 84% complété - 2 tâches ouvertes - 0 retard</text>
+</svg>

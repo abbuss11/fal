@@ -49,6 +49,30 @@ class TaskResource extends Resource
                 Forms\Components\Select::make('priority')
                     ->options(Task::priorityOptions())
                     ->required(),
+                Forms\Components\Select::make('tags')
+                    ->relationship('tags', 'name')
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->label('Tags')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(80),
+                        Forms\Components\TextInput::make('color')->maxLength(20)->placeholder('#0ea5e9'),
+                    ]),
+                Forms\Components\Select::make('dependencies')
+                    ->relationship(
+                        name: 'dependencies',
+                        titleAttribute: 'title',
+                        modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query, ?Task $record) {
+                            if ($record) {
+                                $query->where('project_id', $record->project_id)->whereKeyNot($record->id);
+                            }
+                        },
+                    )
+                    ->multiple()
+                    ->searchable()
+                    ->preload()
+                    ->label('Dependances'),
                 Forms\Components\TextInput::make('estimated_hours')
                     ->numeric()
                     ->label('Heures estimees'),
@@ -94,6 +118,12 @@ class TaskResource extends Resource
                         'low' => 'gray',
                         default => 'gray',
                     }),
+                Tables\Columns\TagsColumn::make('tags.name')
+                    ->label('Tags'),
+                Tables\Columns\TextColumn::make('dependencies_count')
+                    ->counts('dependencies')
+                    ->label('Dependances')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Echeance')
                     ->dateTime('d/m/Y H:i')
@@ -104,6 +134,9 @@ class TaskResource extends Resource
                     ->options(Task::statusOptions()),
                 Tables\Filters\SelectFilter::make('priority')
                     ->options(Task::priorityOptions()),
+                Tables\Filters\SelectFilter::make('tags')
+                    ->relationship('tags', 'name')
+                    ->label('Tag'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

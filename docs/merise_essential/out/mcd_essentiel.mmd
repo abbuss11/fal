@@ -1,0 +1,70 @@
+erDiagram
+    UTILISATEUR {
+        string id_utilisateur
+        string nom
+        string email
+        string role
+        string etat_compte
+    }
+    CLIENT {
+        string id_client
+        string nom_client
+        string email
+        string organisation
+    }
+    PROJET {
+        string id_projet
+        string titre
+        string statut
+        string priorite
+        string date_debut
+        string date_fin
+    }
+    AFFECTATION_PROJET {
+        string id_affectation
+        string role_projet
+        string actif
+    }
+    TACHE {
+        string id_tache
+        string titre
+        string statut
+        string priorite
+        string date_echeance
+    }
+    SOUS_TACHE {
+        string id_sous_tache
+        string libelle
+        string est_terminee
+    }
+    COMMENTAIRE {
+        string id_commentaire
+        string contenu
+        string date_commentaire
+    }
+    DOCUMENT {
+        string id_document
+        string nom_fichier
+        string chemin_fichier
+    }
+    FEUILLE_TEMPS {
+        string id_timesheet
+        string duree_heures
+        string date_saisie
+    }
+    UTILISATEUR ||--o{ PROJET : "owner_id"
+    CLIENT ||--o{ PROJET : "client_id"
+    PROJET ||--o{ AFFECTATION_PROJET : "project_id"
+    UTILISATEUR ||--o{ AFFECTATION_PROJET : "user_id"
+    PROJET ||--o{ TACHE : "project_id"
+    UTILISATEUR ||--o{ TACHE : "assigned_to"
+    TACHE ||--o{ SOUS_TACHE : "task_id"
+    UTILISATEUR ||--o{ SOUS_TACHE : "completed_by"
+    TACHE ||--o{ COMMENTAIRE : "task_id"
+    UTILISATEUR ||--o{ COMMENTAIRE : "user_id"
+    PROJET ||--o{ DOCUMENT : "project_id"
+    TACHE ||--o{ DOCUMENT : "task_id"
+    UTILISATEUR ||--o{ DOCUMENT : "uploaded_by"
+    UTILISATEUR ||--o{ FEUILLE_TEMPS : "user_id"
+    PROJET ||--o{ FEUILLE_TEMPS : "project_id"
+    TACHE ||--o{ FEUILLE_TEMPS : "task_id"

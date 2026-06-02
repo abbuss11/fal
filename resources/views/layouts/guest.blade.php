@@ -22,8 +22,10 @@
 
         <div class="relative min-h-screen px-4 py-10 sm:px-6">
             <div class="client-shell">
-                <div class="saas-shell grid items-stretch gap-5 lg:grid-cols-[1.04fr_0.96fr]">
+                <div class="saas-shell flex items-center justify-between lg:grid-cols-1">
+                     <!---
                     <section class="saas-hero flex flex-col justify-between">
+                       
                         <div class="saas-hero-content space-y-4">
                             <div class="flex items-center justify-between gap-2">
                                 <a href="/" class="inline-flex items-center gap-3">
@@ -41,7 +43,7 @@
                                     {{ strtoupper($otherLocale) }}
                                 </a>
                             </div>
- <!----
+ 
                             <h1 class="max-w-xl text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
                                 {{ __('ui.guest.hero_title') }}
                             </h1>
@@ -61,14 +63,12 @@
                                     <p class="text-xs text-slate-500">{{ __('ui.guest.metric_execution_desc') }}</p>
                                 </article>
                             </div>
-                            --->
+                            
                         </div>
+                        
 
-                        <p class="saas-hero-content mt-4 text-xs text-slate-500">
-                            {{ __('ui.guest.support_note') }}
-                        </p>
-                    </section>
-
+                    </section> 
+                    --->
                     <section class="client-panel client-grid-bg w-full px-6 py-6 sm:px-8">
                         {{ $slot }}
                     </section>

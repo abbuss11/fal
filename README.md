@@ -118,6 +118,13 @@ Legende:
 - Laravel Echo + Pusher protocol (Pusher ou Soketi)
 - DomPDF (export PDF)
 
+## Guide de deploiement VPS + SQL
+
+Voir `docs/DEPLOIEMENT_VPS_SQL.md` pour:
+- deploiement VPS production (Nginx + PHP-FPM + Supervisor + SSL)
+- passage de SQLite vers MySQL/MariaDB
+- checklist post-deploiement
+
 ## 5) Installation rapide
 
 ```bash

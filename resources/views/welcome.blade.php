@@ -77,7 +77,7 @@
                         </div>
                     </div>
 
-                    <div class="saas-hero">
+                    <d+iv class="saas-hero">
                         <div class="saas-hero-content space-y-4">
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <article class="saas-kpi-card">
